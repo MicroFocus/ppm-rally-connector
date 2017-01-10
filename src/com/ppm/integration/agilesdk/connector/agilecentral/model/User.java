@@ -3,11 +3,7 @@ package com.ppm.integration.agilesdk.connector.agilecentral.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Entity;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
-
 import net.sf.json.JSONObject;
-
 public class User extends Entity {
 
 	private List<HierarchicalRequirement> hierarchicalRequirements = new ArrayList<HierarchicalRequirement>();

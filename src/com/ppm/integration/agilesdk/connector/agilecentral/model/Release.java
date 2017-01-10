@@ -2,8 +2,6 @@ package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
 import java.util.Date;
 
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Entity;
-
 import net.sf.json.JSONObject;
 
 public class Release extends Entity {

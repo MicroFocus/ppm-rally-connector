@@ -133,9 +133,9 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
                         List<Option> options = new LinkedList<Option>();
-                        options.add(new Option("0", "Iteration"));
-                        options.add(new Option("1", "User story"));
-                        options.add(new Option("2", "Task"));
+                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_ITERATION, "ITERATION"));
+                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "USER_STORY"));
+                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_TASK, "TASK"));
                         return options;
                     }
                 }, new LineBreaker(),
@@ -182,7 +182,7 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                     continue;
                 }
 
-                if (values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals("2")) {
+                if (values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals(Constants.KEY_DATA_DETAIL_LEVEL_TASK)) {
                     // all task
                     String tag = "TA";
                     List<HierarchicalRequirement> hierarchicalRequirements = rallyClient.getHierarchicalRequirements();
@@ -212,7 +212,8 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                                     project.getName(), task.getName(), hms, values, startDate, endDate));
                         }
                     }
-                } else if (values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals("1")) {
+                } else if (values.get(Constants.KEY_DATA_DETAIL_LEVEL)
+                        .equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
                     // user story
                     String tag = "US";
                     List<HierarchicalRequirement> hierarchicalRequirements = rallyClient.getHierarchicalRequirements();
@@ -318,11 +319,10 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
             this.startDate = startDate;
             this.endDate = endDate;
 
+            effortList.putAll(hms);
             for (String key : effortList.keySet()) {
                 this.totalEffort = this.totalEffort + effortList.get(key);
             }
-
-            effortList.putAll(hms);
         }
 
         @Override

@@ -1,7 +1,5 @@
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Entity;
-
 import net.sf.json.JSONObject;
 
 public class Project extends Entity{

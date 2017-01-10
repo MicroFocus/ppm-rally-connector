@@ -1,16 +1,14 @@
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Entity;
-
 import net.sf.json.JSONObject;
 
 public class Workspace extends Entity {
 
-	public Workspace(JSONObject jsonObject) {
-		super(jsonObject);
-	}
+    public Workspace(JSONObject jsonObject) {
+        super(jsonObject);
+    }
 
-	public String getProjectsRef() {
-		return this.jsonObject.getJSONObject("Projects").getString("_ref");
-	}
+    public String getProjectsRef() {
+        return this.jsonObject.getJSONObject("Projects").getString("_ref");
+    }
 }
