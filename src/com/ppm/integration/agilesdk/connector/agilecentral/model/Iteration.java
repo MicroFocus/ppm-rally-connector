@@ -6,11 +6,11 @@ import java.util.List;
 
 import net.sf.json.JSONObject;
 
-import com.hp.ppm.integration.pm.IExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalTask;
 
 public class Iteration extends Entity {
 
-	private final List<IExternalTask> hierarchicalRequirements = new ArrayList<IExternalTask>();
+    private final List<ExternalTask> hierarchicalRequirements = new ArrayList<ExternalTask>();
 	private final List<HierarchicalRequirement> hierarchicalRequirement = new ArrayList<HierarchicalRequirement>();
 	
 	public Iteration(JSONObject jsonObject) {
@@ -25,12 +25,10 @@ public class Iteration extends Entity {
 		}
 	}
 
-	@Override
 	public Date getScheduleStart() {
 		return convertToDate(check("StartDate") ? jsonObject.getString("StartDate") : null);
 	}
 
-	@Override
 	public Date getScheduleFinish() {
 		return convertToDate(check("EndDate") ? jsonObject.getString("EndDate") : null);
 	}
@@ -38,23 +36,23 @@ public class Iteration extends Entity {
 	@Override
 	public TaskStatus getStatus() {
 		String status = (check("State") ? jsonObject.getString("State") : null);
-		IExternalTask.TaskStatus result = IExternalTask.TaskStatus.UNKNOWN;
+        ExternalTask.TaskStatus result = ExternalTask.TaskStatus.UNKNOWN;
 		switch (status){
 		case "Planning":
-			result = IExternalTask.TaskStatus.IN_PLANNING;
+                result = ExternalTask.TaskStatus.IN_PLANNING;
 			break;
 		case "Committed":
-			result = IExternalTask.TaskStatus.READY;
+                result = ExternalTask.TaskStatus.READY;
 			break;
 		case "Accepted":
-			result = IExternalTask.TaskStatus.COMPLETED;
+                result = ExternalTask.TaskStatus.COMPLETED;
 			break;
 		}
 		return result;
 	}
 
 	@Override
-	public List<IExternalTask> getChildren() {
+    public List<ExternalTask> getChildren() {
 		return hierarchicalRequirements;		
 	}
 	

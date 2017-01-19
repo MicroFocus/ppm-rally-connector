@@ -51,16 +51,16 @@ public class RestHelper {
 		return jsonArray;
 	}
 
-	private JSONObject doQuery(String uri, String query, boolean fetch, String order, int start, int pageSize) {
-		this.resource.uri(checkURI(uri)).getUriBuilder().replaceQueryParam("query", query)
+    private JSONObject doQuery(String uri, String query, boolean fetch, String order, int start, int pageSize) {
+        this.resource.uri(checkURI(uri)).getUriBuilder().replaceQueryParam("query", query)
 				.replaceQueryParam("fetch", fetch)
 				.replaceQueryParam("order", order)
 				.replaceQueryParam("start", start)
-				.replaceQueryParam("pagesize", pageSize);
+                .replaceQueryParam("pagesize", pageSize);
 		return this.get();
 	}
 
-	private JSONObject get() {
+    private JSONObject get() {
 		String json = this.resource.get(String.class);
 		return JSONObject.fromObject(json);
 	}

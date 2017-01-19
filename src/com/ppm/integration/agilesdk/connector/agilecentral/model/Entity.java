@@ -7,10 +7,10 @@ import javax.xml.bind.DatatypeConverter;
 
 import net.sf.json.JSONObject;
 
-import com.hp.ppm.integration.pm.IExternalTask;
-import com.hp.ppm.integration.pm.ITaskActual;
+import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
 
-public class Entity implements IExternalTask{
+public class Entity extends ExternalTask {
 
 	protected JSONObject jsonObject;
 
@@ -44,16 +44,6 @@ public class Entity implements IExternalTask{
 	}
 
 	@Override
-	public Date getScheduleStart() {
-		return null;
-	}
-
-	@Override
-	public Date getScheduleFinish() {
-		return null;
-	}
-
-	@Override
 	public long getOwnerId() {
 		return -1;
 	}
@@ -64,7 +54,7 @@ public class Entity implements IExternalTask{
 	}
 
 	@Override
-	public List<IExternalTask> getChildren() {
+    public List<ExternalTask> getChildren() {
 		return null;
 	}
 
@@ -74,7 +64,7 @@ public class Entity implements IExternalTask{
 	}
 
 	@Override
-	public List<ITaskActual> getActuals() {
+    public List<ExternalTaskActuals> getActuals() {
 		return null;
 	}
 

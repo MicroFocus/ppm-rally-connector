@@ -10,12 +10,10 @@ public class Release extends Entity {
 		super(jsonObject);
 	}
 	
-	@Override
 	public Date getScheduleStart() {
 		return convertToDate(check("ReleaseStartDate") ? jsonObject.getString("ReleaseStartDate") : null);
 	}
 
-	@Override
 	public Date getScheduleFinish() {
 		return convertToDate(check("ReleaseDate") ? jsonObject.getString("ReleaseDate") : null);
 	}

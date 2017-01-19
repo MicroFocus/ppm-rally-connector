@@ -13,22 +13,10 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
-import net.sf.json.JSONObject;
-
 import org.apache.log4j.Logger;
 
-import com.hp.ppm.integration.ValueSet;
-import com.hp.ppm.integration.tm.ExternalWorkItemActualEfforts;
-import com.hp.ppm.integration.tm.IExternalWorkItem;
-import com.hp.ppm.integration.tm.TimeSheetIntegration;
-import com.hp.ppm.integration.tm.TimeSheetIntegrationContext;
-import com.hp.ppm.integration.ui.CheckBox;
-import com.hp.ppm.integration.ui.DynamicalDropdown;
-import com.hp.ppm.integration.ui.Field;
-import com.hp.ppm.integration.ui.LineBreaker;
-import com.hp.ppm.integration.ui.PasswordText;
-import com.hp.ppm.integration.ui.PlainText;
 import com.hp.ppm.tm.model.TimeSheet;
+import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Project;
@@ -37,8 +25,18 @@ import com.ppm.integration.agilesdk.connector.agilecentral.model.Task;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryItem;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryValue;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Workspace;
+import com.ppm.integration.agilesdk.connector.agilecentral.ui.RallyEntityDropdown;
+import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
+import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
+import com.ppm.integration.agilesdk.tm.TimeSheetIntegration;
+import com.ppm.integration.agilesdk.tm.TimeSheetIntegrationContext;
+import com.ppm.integration.agilesdk.ui.CheckBox;
+import com.ppm.integration.agilesdk.ui.Field;
+import com.ppm.integration.agilesdk.ui.LineBreaker;
+import com.ppm.integration.agilesdk.ui.PasswordText;
+import com.ppm.integration.agilesdk.ui.PlainText;
 
-public class RallyTimeSheetIntegration implements TimeSheetIntegration {
+public class RallyTimeSheetIntegration extends TimeSheetIntegration {
     private final Logger logger = Logger.getLogger(this.getClass());
 
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -58,7 +56,7 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
         return Arrays.asList(new Field[] {
                 new PlainText(Constants.KEY_USERNAME, "USERNAME", "dan@acme.com", true),
                 new PasswordText(Constants.KEY_PASSWORD, "PASSWORD", "Release!", true),
-                new DynamicalDropdown(Constants.KEY_SUBSCRIPTION, "SUBSCRIPTION", true) {
+                new RallyEntityDropdown(Constants.KEY_SUBSCRIPTION, "SUBSCRIPTION", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -76,8 +74,9 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                         Subscription subscription = rallyClient.getSubscription();
                         return Arrays.asList(new Option[] {new Option(subscription.getId(), subscription.getName())});
                     }
+
                 },
-                new DynamicalDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
+                new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -93,15 +92,15 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                         RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
 
                         List<Option> options = new LinkedList<Option>();
-
                         for (Workspace w : rallyClient.getWorkspaces(values.get(Constants.KEY_SUBSCRIPTION))) {
                             options.add(new Option(w.getId(), w.getName()));
                         }
 
                         return options;
                     }
+
                 },
-                new DynamicalDropdown(Constants.KEY_PROJECT, "PROJECT", false) {
+                new RallyEntityDropdown(Constants.KEY_PROJECT, "PROJECT", false) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -123,7 +122,8 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
 
                         return options;
                     }
-                }, new DynamicalDropdown(Constants.KEY_DATA_DETAIL_LEVEL, "DATA_DETAIL_LEVEL", true) {
+
+                }, new RallyEntityDropdown(Constants.KEY_DATA_DETAIL_LEVEL, "DATA_DETAIL_LEVEL", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -139,20 +139,19 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                         return options;
                     }
                 }, new LineBreaker(),
-                new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", "block", false),
-                new LineBreaker()});
+                new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", false), new LineBreaker()});
     }
 
     @Override
-    public List<IExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext context, final ValueSet values) {
-        final List<IExternalWorkItem> items = getExternalWorkItemsByTasks(context, values);
+    public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext context, final ValueSet values) {
+        final List<ExternalWorkItem> items = getExternalWorkItemsByTasks(context, values);
         return items;
     }
 
-    private List<IExternalWorkItem> getExternalWorkItemsByTasks(TimeSheetIntegrationContext context,
+    private List<ExternalWorkItem> getExternalWorkItemsByTasks(TimeSheetIntegrationContext context,
             final ValueSet values)
     {
-        final List<IExternalWorkItem> items = Collections.synchronizedList(new LinkedList<IExternalWorkItem>());
+        final List<ExternalWorkItem> items = Collections.synchronizedList(new LinkedList<ExternalWorkItem>());
 
         Config config = new Config();
         config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
@@ -168,6 +167,7 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
         final Date endDate = timeSheet.getPeriodEndDate().toGregorianCalendar().getTime();
 
         HashMap<String, List<TimeEntryItem>> timeEntryItemsHM = rallyClient.getTimeEntryItem();
+
         for (final Workspace workspace : workspaces) {
 
             if (!values.get(Constants.KEY_WORKSPACE).isEmpty()
@@ -177,6 +177,7 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
 
             List<Project> projects = rallyClient.getProjects(workspace.getId());
             for (final Project project : projects) {
+
                 if (!values.get(Constants.KEY_PROJECT).isEmpty()
                         && !project.getId().equals(values.get(Constants.KEY_PROJECT))) {
                     continue;
@@ -208,8 +209,9 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                             if (values.get(Constants.KEY_REMOVE_ITEMS).equals("true") && hms.size() == 0) {
                                 continue;
                             }
-                            items.add(new RallyExternalWorkItem(tag, subscription.getName(), workspace.getName(),
-                                    project.getName(), task.getName(), hms, values, startDate, endDate));
+
+                            items.add(new RallyExternalWorkItem(tag, project.getName(), task.getName(), hms, values,
+                                    startDate, endDate));
                         }
                     }
                 } else if (values.get(Constants.KEY_DATA_DETAIL_LEVEL)
@@ -240,8 +242,8 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                         if (values.get(Constants.KEY_REMOVE_ITEMS).equals("true") && hms.size() == 0) {
                             continue;
                         }
-                        items.add(new RallyExternalWorkItem(tag, subscription.getName(), workspace.getName(), project
-                                .getName(), hierarchicalRequirement.getName(), hms, values, startDate, endDate));
+                        items.add(new RallyExternalWorkItem(tag, project.getName(), hierarchicalRequirement.getName(),
+                                hms, values, startDate, endDate));
                     }
                 } else {
                     // iteration
@@ -274,8 +276,8 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
                         if (values.get(Constants.KEY_REMOVE_ITEMS).equals("true") && hms.size() == 0) {
                             continue;
                         }
-                        items.add(new RallyExternalWorkItem(tag, subscription.getName(), workspace.getName(), project
-                                .getName(), iteration.getName(), hms, values, startDate, endDate));
+                        items.add(new RallyExternalWorkItem(tag, project.getName(), iteration.getName(), hms, values,
+                                startDate, endDate));
                     }
                 }
             }
@@ -284,20 +286,13 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
         return items;
     }
 
-    private class RallyExternalWorkItem implements IExternalWorkItem {
+    private class RallyExternalWorkItem extends ExternalWorkItem {
+
         final String tag;
-
-        final String subscription;
-
-        final String workspace;
 
         final String project;
 
         final String iteration;
-
-        final ValueSet values;
-
-        int totalEffort = 0;
 
         String errorMessage = null;
 
@@ -307,22 +302,15 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
 
         HashMap<String, Integer> effortList = new HashMap<>();
 
-        public RallyExternalWorkItem(String tag, String subscription, String workspace, String project,
-                String iteration, HashMap<String, Integer> hms, ValueSet values, Date startDate, Date endDate) {
+        public RallyExternalWorkItem(String tag, String project, String iteration, HashMap<String, Integer> hms,
+                ValueSet values, Date startDate, Date endDate) {
             this.tag = tag;
-            this.subscription = subscription;
-            this.workspace = workspace;
             this.project = project;
             this.iteration = iteration;
-            this.values = values;
-
             this.startDate = startDate;
             this.endDate = endDate;
 
             effortList.putAll(hms);
-            for (String key : effortList.keySet()) {
-                this.totalEffort = this.totalEffort + effortList.get(key);
-            }
         }
 
         @Override
@@ -331,8 +319,8 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
         }
 
         @Override
-        public double getEffort() {
-            return totalEffort;
+        public Double getTotalEffort() {
+            return null;
         }
 
         @Override
@@ -341,40 +329,24 @@ public class RallyTimeSheetIntegration implements TimeSheetIntegration {
         }
 
         @Override
-        public String getExternalData() {
-            JSONObject json = new JSONObject();
-
-            json.put("serverURL", this.values.get(Constants.KEY_BASE_URL));
-            json.put("username", this.values.get(Constants.KEY_USERNAME));
-            json.put("password", this.values.get(Constants.KEY_PASSWORD));
-
-            json.put("subscription", this.subscription);
-            json.put("workspace", this.workspace);
-            json.put("project", this.project);
-            json.put("iteration", this.iteration);
-
-            json.put("totalEffort", this.totalEffort);
-            json.put("effort", this.getEffort());
-            json.put("errorMessage", this.getErrorMessage());
+        public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
+            ExternalWorkItemEffortBreakdown effortBreakdown = new ExternalWorkItemEffortBreakdown();
 
             int numOfWorkDays = getDaysDiffNumber(startDate, endDate);
-
             if (numOfWorkDays > 0) {
-                ExternalWorkItemActualEfforts actual = new ExternalWorkItemActualEfforts();
                 Calendar calendar = new GregorianCalendar();
                 calendar.setTime(startDate);
+
                 for (int i = 0; i < numOfWorkDays; i++) {
                     double effort = 0;
                     if (effortList.containsKey(convertDate(calendar.getTime()))) {
                         effort = effortList.get(convertDate(calendar.getTime()));
                     }
-                    actual.getEffortList().put(ExternalWorkItemActualEfforts.dateFormat.format(calendar.getTime()),
-                            effort);
+                    effortBreakdown.addEffort(calendar.getTime(), effort);
                     calendar.add(Calendar.DAY_OF_MONTH, 1);
                 }
-                json.put(ExternalWorkItemActualEfforts.JSON_KEY_FOR_ACTUAL_EFFORT, actual.toJson());
             }
-            return json.toString();
+            return effortBreakdown;
         }
 
         private int getDaysDiffNumber(Date startDate, Date endDate) {

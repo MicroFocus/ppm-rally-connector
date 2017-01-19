@@ -4,8 +4,9 @@ import java.util.Date;
 
 import net.sf.json.JSONObject;
 
-import com.hp.ppm.integration.pm.IExternalTask;
-import com.hp.ppm.integration.provider.UserProvider;
+import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.provider.UserProvider;
+
 public class HierarchicalRequirement extends Entity {
 
 	private Iteration iteration;
@@ -49,12 +50,10 @@ public class HierarchicalRequirement extends Entity {
 		this.user = user;
 	}
 
-	@Override
 	public Date getScheduleStart() {
 		return iteration.getScheduleStart();
 	}
 
-	@Override
 	public Date getScheduleFinish() {
 		return iteration.getScheduleFinish();
 	}
@@ -74,18 +73,18 @@ public class HierarchicalRequirement extends Entity {
 	@Override
 	public TaskStatus getStatus() {
 		String state = (check("ScheduleState") ? jsonObject.getString("ScheduleState") : null);
-		IExternalTask.TaskStatus result = IExternalTask.TaskStatus.UNKNOWN;
+        ExternalTask.TaskStatus result = ExternalTask.TaskStatus.UNKNOWN;
 		//Defined,In-Progress,Completed,Accepted
 		switch (state){
 		case "Defined":
-			result = IExternalTask.TaskStatus.READY;
+                result = ExternalTask.TaskStatus.READY;
 			break;
 		case "In-Progress":
-			result = IExternalTask.TaskStatus.IN_PROGRESS;
+                result = ExternalTask.TaskStatus.IN_PROGRESS;
 			break;
 		case "Completed":
 		case "Accepted":
-			result = IExternalTask.TaskStatus.COMPLETED;
+                result = ExternalTask.TaskStatus.COMPLETED;
 			break;
 		}
 		return result;
