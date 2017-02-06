@@ -5,29 +5,27 @@ import org.apache.wink.client.ClientConfig;
 
 public class Config {
 
-	private ClientConfig clientConfig;
-	private String basicAuthorization;
+    private ClientConfig clientConfig;
 
-	public void setProxy(String proxyHost, String proxyPort) {
-		clientConfig = new ClientConfig();
-		if (proxyHost != null && !proxyHost.isEmpty()
-				&& proxyHost != null && !proxyHost.isEmpty()) {
-			clientConfig.proxyHost(proxyHost);
-			clientConfig.proxyPort(Integer.parseInt(proxyPort));
-		}
-	}
+    private String basicAuthorization;
 
-	public void setBasicAuthorization(String userName, String password) {
-		basicAuthorization = "Basic "
-				+ new String(Base64.encodeBase64((userName + ":" + password)
-						.getBytes()));
-	}
+    public void setProxy(String proxyHost, String proxyPort) {
+        clientConfig = new ClientConfig();
+        if (proxyHost != null && !proxyHost.isEmpty() && proxyHost != null && !proxyHost.isEmpty()) {
+            clientConfig.proxyHost(proxyHost);
+            clientConfig.proxyPort(Integer.parseInt(proxyPort));
+        }
+    }
 
-	public ClientConfig getClientConfig() {
-		return clientConfig;
-	}
+    public void setBasicAuthorization(String userName, String password) {
+        basicAuthorization = "Basic " + new String(Base64.encodeBase64((userName + ":" + password).getBytes()));
+    }
 
-	public String getBasicAuthorization() {
-		return basicAuthorization;
-	}
+    public ClientConfig getClientConfig() {
+        return clientConfig;
+    }
+
+    public String getBasicAuthorization() {
+        return basicAuthorization;
+    }
 }

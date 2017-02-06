@@ -1,8 +1,8 @@
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
-import java.util.Date;
-
 import net.sf.json.JSONObject;
+
+import java.util.Date;
 
 public class TimeEntryValue extends Entity {
 

@@ -1,45 +1,24 @@
-
 package com.ppm.integration.agilesdk.connector.agilecentral;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-
-import org.apache.log4j.Logger;
 
 import com.hp.ppm.tm.model.TimeSheet;
 import com.ppm.integration.agilesdk.ValueSet;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Project;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Subscription;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Task;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryItem;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryValue;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Workspace;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.*;
 import com.ppm.integration.agilesdk.connector.agilecentral.ui.RallyEntityDropdown;
 import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
 import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegration;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegrationContext;
-import com.ppm.integration.agilesdk.ui.CheckBox;
-import com.ppm.integration.agilesdk.ui.Field;
-import com.ppm.integration.agilesdk.ui.LineBreaker;
-import com.ppm.integration.agilesdk.ui.PasswordText;
-import com.ppm.integration.agilesdk.ui.PlainText;
+import com.ppm.integration.agilesdk.ui.*;
+import org.apache.log4j.Logger;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class RallyTimeSheetIntegration extends TimeSheetIntegration {
-    private final Logger logger = Logger.getLogger(this.getClass());
-
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+
+    private final Logger logger = Logger.getLogger(this.getClass());
 
     protected synchronized String convertDate(Date date) {
         try {
@@ -51,20 +30,16 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
     }
 
-    @Override
-    public List<Field> getMappingConfigurationFields(ValueSet paramValueSet) {
-        return Arrays.asList(new Field[] {
-                new PlainText(Constants.KEY_USERNAME, "USERNAME", "dan@acme.com", true),
+    @Override public List<Field> getMappingConfigurationFields(ValueSet paramValueSet) {
+        return Arrays.asList(new Field[] {new PlainText(Constants.KEY_USERNAME, "USERNAME", "dan@acme.com", true),
                 new PasswordText(Constants.KEY_PASSWORD, "PASSWORD", "Release!", true),
                 new RallyEntityDropdown(Constants.KEY_SUBSCRIPTION, "SUBSCRIPTION", true) {
 
-                    @Override
-                    public List<String> getDependencies() {
+                    @Override public List<String> getDependencies() {
                         return Arrays.asList(new String[] {Constants.KEY_USERNAME, Constants.KEY_PASSWORD});
                     }
 
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
+                    @Override public List<Option> getDynamicalOptions(ValueSet values) {
                         Config config = new Config();
                         config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
                         config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
@@ -75,75 +50,66 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         return Arrays.asList(new Option[] {new Option(subscription.getId(), subscription.getName())});
                     }
 
-                },
-                new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
+                }, new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
 
-                    @Override
-                    public List<String> getDependencies() {
-                        return Arrays.asList(new String[] {Constants.KEY_SUBSCRIPTION});
-                    }
+            @Override public List<String> getDependencies() {
+                return Arrays.asList(new String[] {Constants.KEY_SUBSCRIPTION});
+            }
 
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+            @Override public List<Option> getDynamicalOptions(ValueSet values) {
+                Config config = new Config();
+                config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
+                config.setBasicAuthorization(values.get(Constants.KEY_USERNAME), values.get(Constants.KEY_PASSWORD));
+                RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
 
-                        List<Option> options = new LinkedList<Option>();
-                        for (Workspace w : rallyClient.getWorkspaces(values.get(Constants.KEY_SUBSCRIPTION))) {
-                            options.add(new Option(w.getId(), w.getName()));
-                        }
+                List<Option> options = new LinkedList<Option>();
+                for (Workspace w : rallyClient.getWorkspaces(values.get(Constants.KEY_SUBSCRIPTION))) {
+                    options.add(new Option(w.getId(), w.getName()));
+                }
 
-                        return options;
-                    }
+                return options;
+            }
 
-                },
-                new RallyEntityDropdown(Constants.KEY_PROJECT, "PROJECT", false) {
+        }, new RallyEntityDropdown(Constants.KEY_PROJECT, "PROJECT", false) {
 
-                    @Override
-                    public List<String> getDependencies() {
-                        return Arrays.asList(new String[] {Constants.KEY_WORKSPACE});
-                    }
+            @Override public List<String> getDependencies() {
+                return Arrays.asList(new String[] {Constants.KEY_WORKSPACE});
+            }
 
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+            @Override public List<Option> getDynamicalOptions(ValueSet values) {
+                Config config = new Config();
+                config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
+                config.setBasicAuthorization(values.get(Constants.KEY_USERNAME), values.get(Constants.KEY_PASSWORD));
+                RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
 
-                        List<Option> options = new LinkedList<Option>();
-                        for (Project p : rallyClient.getProjects(values.get(Constants.KEY_WORKSPACE))) {
-                            options.add(new Option(p.getId(), p.getName()));
-                        }
+                List<Option> options = new LinkedList<Option>();
+                for (Project p : rallyClient.getProjects(values.get(Constants.KEY_WORKSPACE))) {
+                    options.add(new Option(p.getId(), p.getName()));
+                }
 
-                        return options;
-                    }
+                return options;
+            }
 
-                }, new RallyEntityDropdown(Constants.KEY_DATA_DETAIL_LEVEL, "DATA_DETAIL_LEVEL", true) {
+        }, new RallyEntityDropdown(Constants.KEY_DATA_DETAIL_LEVEL, "DATA_DETAIL_LEVEL", true) {
 
-                    @Override
-                    public List<String> getDependencies() {
-                        return Arrays.asList(new String[] {});
-                    }
+            @Override public List<String> getDependencies() {
+                return Arrays.asList(new String[] {});
+            }
 
-                    @Override
-                    public List<Option> getDynamicalOptions(ValueSet values) {
-                        List<Option> options = new LinkedList<Option>();
-                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_ITERATION, "ITERATION"));
-                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "USER_STORY"));
-                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_TASK, "TASK"));
-                        return options;
-                    }
-                }, new LineBreaker(),
-                new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", false), new LineBreaker()});
+            @Override public List<Option> getDynamicalOptions(ValueSet values) {
+                List<Option> options = new LinkedList<Option>();
+                options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_ITERATION, "ITERATION"));
+                options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "USER_STORY"));
+                options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_TASK, "TASK"));
+                return options;
+            }
+        }, new LineBreaker(), new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", false),
+                new LineBreaker()});
     }
 
-    @Override
-    public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext context, final ValueSet values) {
+    @Override public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext context,
+            final ValueSet values)
+    {
         final List<ExternalWorkItem> items = getExternalWorkItemsByTasks(context, values);
         return items;
     }
@@ -170,16 +136,16 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
         HashMap<String, List<TimeEntryValue>> timeEntryValuesHM = rallyClient.getTimeEntryValues();
         for (final Workspace workspace : workspaces) {
 
-            if (!values.get(Constants.KEY_WORKSPACE).isEmpty()
-                    && !workspace.getId().equals(values.get(Constants.KEY_WORKSPACE))) {
+            if (!values.get(Constants.KEY_WORKSPACE).isEmpty() && !workspace.getId()
+                    .equals(values.get(Constants.KEY_WORKSPACE))) {
                 continue;
             }
 
             List<Project> projects = rallyClient.getProjects(workspace.getId());
             for (final Project project : projects) {
 
-                if (!values.get(Constants.KEY_PROJECT).isEmpty()
-                        && !project.getId().equals(values.get(Constants.KEY_PROJECT))) {
+                if (!values.get(Constants.KEY_PROJECT).isEmpty() && !project.getId()
+                        .equals(values.get(Constants.KEY_PROJECT))) {
                     continue;
                 }
 
@@ -286,6 +252,29 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
         return items;
     }
 
+    private HashMap<String, Integer> getTimeSheetData(Date startDate, Date endDate,
+            List<TimeEntryValue> timeEntryValues)
+    {
+        HashMap<String, Integer> hms = new HashMap<String, Integer>();
+
+        for (TimeEntryValue timeEntryValue : timeEntryValues) {
+            Date date = timeEntryValue.getDateVal();
+            if (date.getTime() <= startDate.getTime() || date.getTime() >= endDate.getTime()) {
+                continue;
+            }
+
+            int hours = timeEntryValue.getHours();
+            if (!hms.containsKey(convertDate(date))) {
+                hms.put(convertDate(date), hours);
+            } else {
+                int hoursSum = hms.get(convertDate(date)) + hours;
+                hms.put(convertDate(date), hoursSum);
+            }
+        }
+
+        return hms;
+    }
+
     private class RallyExternalWorkItem extends ExternalWorkItem {
 
         final String tag;
@@ -303,7 +292,8 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
         HashMap<String, Integer> effortList = new HashMap<>();
 
         public RallyExternalWorkItem(String tag, String project, String iteration, HashMap<String, Integer> hms,
-                ValueSet values, Date startDate, Date endDate) {
+                ValueSet values, Date startDate, Date endDate)
+        {
             this.tag = tag;
             this.project = project;
             this.iteration = iteration;
@@ -313,23 +303,19 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
             effortList.putAll(hms);
         }
 
-        @Override
-        public String getName() {
+        @Override public String getName() {
             return this.tag + " > " + this.iteration + "(" + this.project + ")";
         }
 
-        @Override
-        public Double getTotalEffort() {
+        @Override public Double getTotalEffort() {
             return null;
         }
 
-        @Override
-        public String getErrorMessage() {
+        @Override public String getErrorMessage() {
             return errorMessage;
         }
 
-        @Override
-        public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
+        @Override public ExternalWorkItemEffortBreakdown getEffortBreakDown() {
             ExternalWorkItemEffortBreakdown effortBreakdown = new ExternalWorkItemEffortBreakdown();
 
             int numOfWorkDays = getDaysDiffNumber(startDate, endDate);
@@ -369,28 +355,6 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
             }
             return diffNumber;
         }
-    }
-
-    private HashMap<String, Integer> getTimeSheetData(Date startDate, Date endDate, List<TimeEntryValue> timeEntryValues)
-    {
-        HashMap<String, Integer> hms = new HashMap<String, Integer>();
-
-        for (TimeEntryValue timeEntryValue : timeEntryValues) {
-            Date date = timeEntryValue.getDateVal();
-            if (date.getTime() <= startDate.getTime() || date.getTime() >= endDate.getTime()) {
-                continue;
-            }
-
-            int hours = timeEntryValue.getHours();
-            if (!hms.containsKey(convertDate(date))) {
-                hms.put(convertDate(date), hours);
-            } else {
-                int hoursSum = hms.get(convertDate(date)) + hours;
-                hms.put(convertDate(date), hoursSum);
-            }
-        }
-
-        return hms;
     }
 
 }

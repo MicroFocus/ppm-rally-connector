@@ -1,26 +1,15 @@
-
 package com.ppm.integration.agilesdk.connector.agilecentral;
+
+import com.ppm.integration.agilesdk.connector.agilecentral.model.*;
+import com.ppm.integration.agilesdk.provider.Providers;
+import com.ppm.integration.agilesdk.provider.UserProvider;
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
-import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Project;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Release;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Subscription;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Task;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryItem;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryValue;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.User;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.Workspace;
-import com.ppm.integration.agilesdk.provider.Providers;
-import com.ppm.integration.agilesdk.provider.UserProvider;
 
 public class RallyClient {
 
@@ -154,8 +143,8 @@ public class RallyClient {
             for (int i = 0; i < jsonArray.size(); i++) {
                 Iteration iteration = new Iteration(jsonArray.getJSONObject(i));
                 Date iterationStart = iteration.getScheduleStart();
-                if (iterationStart.getTime() > releaseStart.getTime()
-                        && iterationStart.getTime() < releaseEnd.getTime()) {
+                if (iterationStart.getTime() > releaseStart.getTime() && iterationStart.getTime() < releaseEnd
+                        .getTime()) {
                     iterations.add(iteration);
                 }
             }

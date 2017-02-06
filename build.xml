@@ -1,15 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="build-agilecentral-connector" basedir="." default="all">
-
-    <property name="BUNDLE_NAME" value="Connector-RALLY"/>
-    <property name="CONNECTOR_DIR" value="."/>
-    <property name="CONNECTOR_DESC" value="Rally v2.0"/>
-    <property name="PPM_PATCH_VERSION" value="000"/>
+<project name="build-sample-connector" basedir="." default="all">
 
     <target name="all">
         <ant dir="." antfile="build-connector.xml" target="all" inheritall="true" />
-
-        <ant dir="." antfile="build-connector.xml" target="deploy-for-ppm-install-and-upgrade" inheritall="true" />
     </target>
 
     <target name="quick-deploy">

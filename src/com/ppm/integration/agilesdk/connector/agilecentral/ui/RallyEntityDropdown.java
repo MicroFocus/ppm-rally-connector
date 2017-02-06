@@ -1,10 +1,9 @@
-
 package com.ppm.integration.agilesdk.connector.agilecentral.ui;
-
-import java.util.List;
 
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.ui.DynamicDropdown;
+
+import java.util.List;
 
 public class RallyEntityDropdown extends DynamicDropdown {
 
@@ -16,13 +15,11 @@ public class RallyEntityDropdown extends DynamicDropdown {
         super(name, labelKey, defaultValue, display, isRequired);
     }
 
-    @Override
-    public List<String> getDependencies() {
+    @Override public List<String> getDependencies() {
         return null;
     }
 
-    @Override
-    public List<Option> getDynamicalOptions(ValueSet paramValueSet) {
+    @Override public List<Option> getDynamicalOptions(ValueSet paramValueSet) {
         return null;
     }
 

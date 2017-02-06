@@ -15,6 +15,10 @@
             <include name="**/*.jar" />
         </fileset>
     </path>
+	
+	<condition property="webcontent.exists">
+		<available file="${CONNECTOR_DIR}/webcontent" type="dir"/>
+    </condition>
 
     <target name="all" depends="clean, compile, jar-cls, jar-web, bundle"/>
 
@@ -50,58 +54,44 @@
     </target>
 
     <target name="jar-cls" depends="compile">
-        <jar jarfile="${CONNECTOR_DIR}/bin/connector-${connector.bundle.name}.jar" compress="true">
+        <jar jarfile="${CONNECTOR_DIR}/bin/connector-${BUNDLE_NAME}.jar" compress="true">
             <fileset dir="${CONNECTOR_DIR}/bin/classes" />
         </jar>
     </target>
 
-	<target name="deploy-for-ppm-install-and-upgrade">
-        <echo>Copy jar files</echo>
-        <copy todir="${ppm.server.root}/deploy/itg.war/WEB-INF/lib/" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/bin" includes="connector-${connector.bundle.name}.jar" />
-        </copy>
-       
-        <echo>Copy web content files</echo>
-        <copy todir="${ppm.server.root}/deploy/itg.war/" overwrite="false" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/webcontent" includes="**/*"/>
-        </copy>
-    </target>
-	
-	<target name="deploy" depends="jar-cls">
-        <copy todir="${ppm.server.root}/deploy/itg.war/WEB-INF/lib/" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/bin" includes="connector-${connector.bundle.name}.jar" />
-        </copy>
-
-        <copy todir="${ppm.server.root}/deploy/itg.war/" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/webcontent" includes="**/*"/>
-        </copy>
-    </target>
-	
     <target name="quick-deploy" depends="jar-cls">
         <echo>Only for Connector Developers - Now copying connector Jar to PPM Server.</echo>
-        <copy todir="${ppm.server.root}/deploy/itg.war/WEB-INF/lib/" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/bin" includes="connector-${connector.bundle.name}.jar" />
+        <copy todir="${ppm.server.root}/deploy/itg.war/WEB-INF/lib" flatten="false">
+            <fileset dir="${CONNECTOR_DIR}/bin" includes="connector-${BUNDLE_NAME}.jar" />
         </copy>
 
-        <copy todir="${ppm.server.root}/deploy/itg.war/" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/webcontent" includes="**/*"/>
-        </copy>
+		<antcall target="copy-webcontent">
+			<param name="copy.webcontent.to.dir" value="${ppm.server.root}/deploy/itg.war/"/>
+		</antcall>
+        
 		<echo>Please restart PPM server.</echo>
     </target>
 
     <target name="jar-web" depends="jar-cls">
         <mkdir dir="${CONNECTOR_DIR}/bin/fs_war" />
-        <copy todir="${CONNECTOR_DIR}/bin/fs_war" flatten="false">
-            <fileset dir="${CONNECTOR_DIR}/webcontent" includes="**/*"/>
-        </copy>
+		
+		<antcall target="copy-webcontent">
+			<param name="copy.webcontent.to.dir" value="${CONNECTOR_DIR}/bin/fs_war"/>
+		</antcall>
 
         <mkdir dir="${CONNECTOR_DIR}/bin/fs_war/WEB-INF/lib" />
-        <copy file="${CONNECTOR_DIR}/bin/connector-${connector.bundle.name}.jar" tofile="${CONNECTOR_DIR}/bin/fs_war/WEB-INF/lib/connector-${connector.bundle.name}.jar" overwrite="true" />
+        <copy file="${CONNECTOR_DIR}/bin/connector-${BUNDLE_NAME}.jar" tofile="${CONNECTOR_DIR}/bin/fs_war/WEB-INF/lib/connector-${BUNDLE_NAME}.jar" overwrite="true" />
 
         <zip zipfile="${CONNECTOR_DIR}/bin/fs_war.jar" compress="true">
             <fileset dir="${CONNECTOR_DIR}/bin/fs_war" />
         </zip>
     </target>
+	
+	<target name="copy-webcontent" if="webcontent.exists">
+		<copy todir="${copy.webcontent.to.dir}" flatten="false">
+			<fileset dir="${CONNECTOR_DIR}/webcontent" includes="**/*"/>
+		</copy>
+	</target>
 
     <target name="bundle" depends="jar-web">
         <!-- BUNDLE_NAME -->
