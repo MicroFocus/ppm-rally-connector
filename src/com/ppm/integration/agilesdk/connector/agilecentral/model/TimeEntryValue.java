@@ -1,7 +1,5 @@
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
-import java.util.Date;
-
 import net.sf.json.JSONObject;
 
 public class TimeEntryValue extends Entity {
@@ -10,8 +8,8 @@ public class TimeEntryValue extends Entity {
         super(jsonObject);
     }
 
-    public Date getDateVal() {
-        return convertToDate(check("DateVal") ? jsonObject.getString("DateVal") : null);
+    public String getDateVal() {
+        return check("DateVal") ? jsonObject.getString("DateVal") : null;
     }
 
     public int getHours() {

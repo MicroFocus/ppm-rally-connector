@@ -72,7 +72,8 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         return Arrays.asList(new Option[] {new Option(subscription.getId(), subscription.getName())});
                     }
 
-                }, new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
+                },
+                new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
 
             @Override public List<String> getDependencies() {
                 return Arrays.asList(new String[] {Constants.KEY_SUBSCRIPTION});
@@ -124,7 +125,8 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "Work Item"));
                 return options;
             }
-        }, new LineBreaker(), new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", false),
+                }, new LineBreaker(),
+                new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", true),
                 new LineBreaker()});
     }
 
@@ -176,7 +178,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                 String tag = "";
                 if (values.get(Constants.KEY_DATA_DETAIL_LEVEL)
                         .equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
-                    // / work_items
+                    // work_items
                     List<Backlog> backlogs = new ArrayList<>();
                     backlogs.addAll(rallyClient.getHierarchicalRequirements());
                     backlogs.addAll(rallyClient.getDefects());
@@ -273,17 +275,14 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
         HashMap<String, Integer> hms = new HashMap<String, Integer>();
 
         for (TimeEntryValue timeEntryValue : timeEntryValues) {
-            Date date = timeEntryValue.getDateVal();
-            if (date.getTime() <= startDate.getTime() || date.getTime() >= endDate.getTime()) {
-                continue;
-            }
+            String date = timeEntryValue.getDateVal().split("T")[0];
 
             int hours = timeEntryValue.getHours();
-            if (!hms.containsKey(convertDate(date))) {
-                hms.put(convertDate(date), hours);
+            if (!hms.containsKey(date)) {
+                hms.put(date, hours);
             } else {
-                int hoursSum = hms.get(convertDate(date)) + hours;
-                hms.put(convertDate(date), hoursSum);
+                int hoursSum = hms.get(date) + hours;
+                hms.put(date, hoursSum);
             }
         }
 
