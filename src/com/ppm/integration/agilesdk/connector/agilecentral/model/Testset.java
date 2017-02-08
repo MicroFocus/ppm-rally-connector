@@ -4,9 +4,10 @@ import net.sf.json.JSONObject;
 
 import com.ppm.integration.agilesdk.provider.UserProvider;
 
-public class HierarchicalRequirement extends Backlog {
+public class Testset extends Backlog {
 
-    public HierarchicalRequirement(JSONObject jsonObject, UserProvider userProvider) {
+    public Testset(JSONObject jsonObject, UserProvider userProvider) {
         super(jsonObject, userProvider);
     }
+	
 }

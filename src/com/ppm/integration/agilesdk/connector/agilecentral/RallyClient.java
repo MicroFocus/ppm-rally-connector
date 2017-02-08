@@ -1,15 +1,27 @@
 package com.ppm.integration.agilesdk.connector.agilecentral;
 
-import com.ppm.integration.agilesdk.connector.agilecentral.model.*;
-import com.ppm.integration.agilesdk.provider.Providers;
-import com.ppm.integration.agilesdk.provider.UserProvider;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
+
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Defect;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Project;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Release;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Subscription;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Task;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Testset;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryItem;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryValue;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.User;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Workspace;
+import com.ppm.integration.agilesdk.provider.Providers;
+import com.ppm.integration.agilesdk.provider.UserProvider;
 
 public class RallyClient {
 
@@ -170,42 +182,150 @@ public class RallyClient {
         HashMap<String, List<TimeEntryItem>> hms = new HashMap<>();
         String timeEntryItemURI = "/slm/webservice/v2.0/timeentryitem";
         JSONArray jsonArray = helper.query(timeEntryItemURI, "", true, "", 1, 20);
+
         for (int i = 0; i < jsonArray.size(); i++) {
             TimeEntryItem item = new TimeEntryItem(jsonArray.getJSONObject(i));
-            if (hms.containsKey(item.getTaskUUID())) {
-                List<TimeEntryItem> items = hms.get(item.getTaskUUID());
+            String WorkProductUUID = item.getWorkProductUUID();
+            if (hms.containsKey(item.getWorkProductUUID())) {
+                List<TimeEntryItem> items = hms.get(item.getWorkProductUUID());
                 items.add(item);
-                String taskUUID = item.getTaskUUID();
-                hms.put(taskUUID, items);
+                hms.put(WorkProductUUID, items);
             } else {
                 List<TimeEntryItem> items = new ArrayList<>();
                 items.add(item);
-                String taskUUID = item.getTaskUUID();
-                hms.put(taskUUID, items);
+                hms.put(WorkProductUUID, items);
             }
         }
         return hms;
     }
 
-    public HashMap<String, List<TimeEntryValue>> getTimeEntryValues() {
+    public HashMap<String, List<TimeEntryValue>> getTimeEntryValue() {
         HashMap<String, List<TimeEntryValue>> hms = new HashMap<>();
         String timeEntryValueURI = "/slm/webservice/v2.0/timeentryvalue";
         JSONArray jsonArray = helper.query(timeEntryValueURI, "", true, "", 1, 20);
         for (int i = 0; i < jsonArray.size(); i++) {
             TimeEntryValue value = new TimeEntryValue(jsonArray.getJSONObject(i));
-            if (hms.containsKey(value.getItemUUID())) {
-                List<TimeEntryValue> values = hms.get(value.getItemUUID());
+            String TimeEntryItemUUID = value.getTimeEntryItemUUID();
+            if (hms.containsKey(TimeEntryItemUUID)) {
+                List<TimeEntryValue> values = hms.get(TimeEntryItemUUID);
                 values.add(value);
-                String ItemUUID = value.getItemUUID();
-                hms.put(ItemUUID, values);
+                hms.put(TimeEntryItemUUID, values);
             } else {
                 List<TimeEntryValue> values = new ArrayList<>();
                 values.add(value);
-                String ItemUUID = value.getItemUUID();
-                hms.put(ItemUUID, values);
+                hms.put(TimeEntryItemUUID, values);
             }
         }
         return hms;
     }
 
+    public HashMap<String, List<HierarchicalRequirement>> getHierarchicalRequirement() {
+        HashMap<String, List<HierarchicalRequirement>> hms = new HashMap<>();
+        String HierarchicalRequirementURI = "/slm/webservice/v2.0/hierarchicalRequirement";
+        JSONArray jsonArray = helper.query(HierarchicalRequirementURI, "", true, "", 1, 20);
+        UserProvider userProvider = Providers.getUserProvider(RallyIntegrationConnector.class);
+
+        for (int i = 0; i < jsonArray.size(); i++) {
+            HierarchicalRequirement hierarchicalRequirement =
+                    new HierarchicalRequirement(jsonArray.getJSONObject(i), userProvider);
+            String IterationUUID = hierarchicalRequirement.getIterationUUID();
+            if (hms.containsKey(hierarchicalRequirement.getIterationUUID())) {
+                List<HierarchicalRequirement> hierarchicalRequirements =
+                        hms.get(hierarchicalRequirement.getIterationUUID());
+                hierarchicalRequirements.add(hierarchicalRequirement);
+                hms.put(IterationUUID, hierarchicalRequirements);
+            } else {
+                List<HierarchicalRequirement> hierarchicalRequirements = new ArrayList<>();
+                hierarchicalRequirements.add(hierarchicalRequirement);
+                hms.put(IterationUUID, hierarchicalRequirements);
+            }
+        }
+        return hms;
+    }
+
+    /**
+     * get all defects
+     * @return
+     */
+    public List<Defect> getDefects() {
+        String defectURI = "/slm/webservice/v2.0/defect";
+        JSONArray jsonArray = helper.query(defectURI, "", true, "", 1, 20);
+        List<Defect> defects = new ArrayList<Defect>();
+
+        UserProvider userProvider = Providers.getUserProvider(RallyIntegrationConnector.class);
+        for (int i = 0; i < jsonArray.size(); i++) {
+
+            defects.add(new Defect(jsonArray.getJSONObject(i), userProvider));
+        }
+        return defects;
+    }
+
+    /**
+     * get all defects correspond to a specified iteration
+     * @return String : the UUID of iteration
+     */
+    public HashMap<String, List<Defect>> getDefect() {
+        HashMap<String, List<Defect>> hms = new HashMap<>();
+        String defectURI = "/slm/webservice/v2.0/defect";
+        JSONArray jsonArray = helper.query(defectURI, "", true, "", 1, 20);
+        UserProvider userProvider = Providers.getUserProvider(RallyIntegrationConnector.class);
+
+        for (int i = 0; i < jsonArray.size(); i++) {
+            Defect defect = new Defect(jsonArray.getJSONObject(i), userProvider);
+            String IterationUUID = defect.getIterationUUID();
+            if (hms.containsKey(defect.getIterationUUID())) {
+                List<Defect> defects = hms.get(defect.getIterationUUID());
+                defects.add(defect);
+                hms.put(IterationUUID, defects);
+            } else {
+                List<Defect> defects = new ArrayList<>();
+                defects.add(defect);
+                hms.put(IterationUUID, defects);
+            }
+        }
+        return hms;
+    }
+
+    /**
+     * get all defects
+     * @return
+     */
+    public List<Testset> getTestsets() {
+        String testsetURI = "/slm/webservice/v2.0/testset";
+        JSONArray jsonArray = helper.query(testsetURI, "", true, "", 1, 20);
+        List<Testset> testsets = new ArrayList<Testset>();
+
+        UserProvider userProvider = Providers.getUserProvider(RallyIntegrationConnector.class);
+        for (int i = 0; i < jsonArray.size(); i++) {
+
+            testsets.add(new Testset(jsonArray.getJSONObject(i), userProvider));
+        }
+        return testsets;
+    }
+
+    /**
+     * get all testsets correspond to a specified iteration
+     * @return String : the UUID of iteration
+     */
+    public HashMap<String, List<Testset>> getTestset() {
+        HashMap<String, List<Testset>> hms = new HashMap<>();
+        String defectURI = "/slm/webservice/v2.0/testset";
+        JSONArray jsonArray = helper.query(defectURI, "", true, "", 1, 20);
+        UserProvider userProvider = Providers.getUserProvider(RallyIntegrationConnector.class);
+
+        for (int i = 0; i < jsonArray.size(); i++) {
+            Testset testset = new Testset(jsonArray.getJSONObject(i), userProvider);
+            String IterationUUID = testset.getIterationUUID();
+            if (hms.containsKey(testset.getIterationUUID())) {
+                List<Testset> testsets = hms.get(testset.getIterationUUID());
+                testsets.add(testset);
+                hms.put(IterationUUID, testsets);
+            } else {
+                List<Testset> testsets = new ArrayList<>();
+                testsets.add(testset);
+                hms.put(IterationUUID, testsets);
+            }
+        }
+        return hms;
+    }
 }
