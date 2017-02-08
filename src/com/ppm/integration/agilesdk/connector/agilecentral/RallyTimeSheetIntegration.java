@@ -1,19 +1,41 @@
 package com.ppm.integration.agilesdk.connector.agilecentral;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import com.hp.ppm.tm.model.TimeSheet;
 import com.ppm.integration.agilesdk.ValueSet;
-import com.ppm.integration.agilesdk.connector.agilecentral.model.*;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Backlog;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Defect;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Project;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Subscription;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Testset;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryItem;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.TimeEntryValue;
+import com.ppm.integration.agilesdk.connector.agilecentral.model.Workspace;
 import com.ppm.integration.agilesdk.connector.agilecentral.ui.RallyEntityDropdown;
 import com.ppm.integration.agilesdk.tm.ExternalWorkItem;
 import com.ppm.integration.agilesdk.tm.ExternalWorkItemEffortBreakdown;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegration;
 import com.ppm.integration.agilesdk.tm.TimeSheetIntegrationContext;
-import com.ppm.integration.agilesdk.ui.*;
-import org.apache.log4j.Logger;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import com.ppm.integration.agilesdk.ui.CheckBox;
+import com.ppm.integration.agilesdk.ui.Field;
+import com.ppm.integration.agilesdk.ui.LineBreaker;
+import com.ppm.integration.agilesdk.ui.PasswordText;
+import com.ppm.integration.agilesdk.ui.PlainText;
 
 public class RallyTimeSheetIntegration extends TimeSheetIntegration {
     private static final DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -98,9 +120,8 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
             @Override public List<Option> getDynamicalOptions(ValueSet values) {
                 List<Option> options = new LinkedList<Option>();
-                options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_ITERATION, "ITERATION"));
-                options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "USER_STORY"));
-                options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_TASK, "TASK"));
+                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_ITERATION, "Iteration"));
+                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "Work Item"));
                 return options;
             }
         }, new LineBreaker(), new CheckBox(Constants.KEY_REMOVE_ITEMS, "IS_REMOVE_ITEMS_WITHOUT_TIMELOG", false),
@@ -133,7 +154,11 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
         final Date endDate = timeSheet.getPeriodEndDate().toGregorianCalendar().getTime();
 
         HashMap<String, List<TimeEntryItem>> timeEntryItemsHM = rallyClient.getTimeEntryItem();
-        HashMap<String, List<TimeEntryValue>> timeEntryValuesHM = rallyClient.getTimeEntryValues();
+        HashMap<String, List<TimeEntryValue>> timeEntryValuesHM = rallyClient.getTimeEntryValue();
+        HashMap<String, List<HierarchicalRequirement>> hierarchicalRequirementHM =
+                rallyClient.getHierarchicalRequirement();
+        HashMap<String, List<Defect>> defectHM = rallyClient.getDefect();
+        HashMap<String, List<Testset>> testsetHM = rallyClient.getTestset();
         for (final Workspace workspace : workspaces) {
 
             if (!values.get(Constants.KEY_WORKSPACE).isEmpty() && !workspace.getId()
@@ -148,59 +173,38 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         .equals(values.get(Constants.KEY_PROJECT))) {
                     continue;
                 }
-
-                if (values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals(Constants.KEY_DATA_DETAIL_LEVEL_TASK)) {
-                    // all task
-                    String tag = "TA";
-                    List<HierarchicalRequirement> hierarchicalRequirements = rallyClient.getHierarchicalRequirements();
-                    for (HierarchicalRequirement hierarchicalRequirement : hierarchicalRequirements) {
-
-                        if (!hierarchicalRequirement.getProjectUUID().equals(project.getUUID())) {
-                            continue;
-                        }
-
-                        List<Task> tasks = rallyClient.getTasks(hierarchicalRequirement.getId());
-                        for (Task task : tasks) {
-                            List<TimeEntryValue> timeEntryValues = new ArrayList<>();
-                            if (timeEntryItemsHM.containsKey(task.getUUID())) {
-                                List<TimeEntryItem> timeEntryItems = timeEntryItemsHM.get(task.getUUID());
-                                for (TimeEntryItem timeEntryItem : timeEntryItems) {
-                                    List<TimeEntryValue> thisTimeEntryValues =
-                                            timeEntryValuesHM.get(timeEntryItem.getUUID());
-                                    timeEntryValues.addAll(thisTimeEntryValues);
-                                }
-                            }
-
-                            HashMap<String, Integer> hms = getTimeSheetData(startDate, endDate, timeEntryValues);
-                            if (values.get(Constants.KEY_REMOVE_ITEMS).equals("true") && hms.size() == 0) {
-                                continue;
-                            }
-
-                            items.add(new RallyExternalWorkItem(tag, project.getName(), task.getName(), hms, values,
-                                    startDate, endDate));
-                        }
-                    }
-                } else if (values.get(Constants.KEY_DATA_DETAIL_LEVEL)
+                String tag = "";
+                if (values.get(Constants.KEY_DATA_DETAIL_LEVEL)
                         .equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
-                    // user story
-                    String tag = "US";
-                    List<HierarchicalRequirement> hierarchicalRequirements = rallyClient.getHierarchicalRequirements();
-                    for (HierarchicalRequirement hierarchicalRequirement : hierarchicalRequirements) {
+                    // / work_items
+                    List<Backlog> backlogs = new ArrayList<>();
+                    backlogs.addAll(rallyClient.getHierarchicalRequirements());
+                    backlogs.addAll(rallyClient.getDefects());
+                    backlogs.addAll(rallyClient.getTestsets());
 
-                        if (!hierarchicalRequirement.getProjectUUID().equals(project.getUUID())) {
+                    for (Backlog backlog : backlogs) {
+                        if (backlog.getType().equals("Defect")) {
+                            tag = "DE";
+                        } else if (backlog.getType().equals("TestSet")) {
+                            tag = "TS";
+                        } else {
+                            tag = "US";
+                        }
+                        if (!backlog.getProjectUUID().equals(project.getUUID())) {
                             continue;
                         }
 
-                        List<Task> tasks = rallyClient.getTasks(hierarchicalRequirement.getId());
                         List<TimeEntryValue> timeEntryValues = new ArrayList<>();
-                        for (Task task : tasks) {
-                            if (timeEntryItemsHM.containsKey(task.getUUID())) {
-                                List<TimeEntryItem> timeEntryItems = timeEntryItemsHM.get(task.getUUID());
-                                for (TimeEntryItem timeEntryItem : timeEntryItems) {
-                                    List<TimeEntryValue> thisTimeEntryValues =
-                                            timeEntryValuesHM.get(timeEntryItem.getUUID());
-                                    timeEntryValues.addAll(thisTimeEntryValues);
+                        String backlogUUID = backlog.getUUID();
+                        if (timeEntryItemsHM.containsKey(backlogUUID)) {
+                            List<TimeEntryItem> timeEntryItems = timeEntryItemsHM.get(backlogUUID);
+                            String timeEntryItemUUID = "";
+                            for (TimeEntryItem timeEntryItem : timeEntryItems) {
+                                timeEntryItemUUID = timeEntryItem.getUUID();
+                                if (timeEntryValuesHM.containsKey(timeEntryItemUUID)) {
+                                    timeEntryValues.addAll(timeEntryValuesHM.get(timeEntryItemUUID));
                                 }
+
                             }
                         }
 
@@ -208,32 +212,43 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         if (values.get(Constants.KEY_REMOVE_ITEMS).equals("true") && hms.size() == 0) {
                             continue;
                         }
-                        items.add(new RallyExternalWorkItem(tag, project.getName(), hierarchicalRequirement.getName(),
+                        items.add(new RallyExternalWorkItem(tag, project.getName(), backlog.getName(),
                                 hms, values, startDate, endDate));
                     }
                 } else {
                     // iteration
-                    String tag = "";
                     List<Iteration> iterations = rallyClient.getIterations(project.getId());
                     for (final Iteration iteration : iterations) {
+                        String iterationUUID = iteration.getUUID();
+                        List<Backlog> backlogs = new ArrayList<>();
 
-                        List<HierarchicalRequirement> hierarchicalRequirements = iteration.getHierarchicalRequirement();
+                        if (hierarchicalRequirementHM.containsKey(iterationUUID)) {
+                            backlogs.addAll(hierarchicalRequirementHM.get(iterationUUID));
+                        }
+                        if (defectHM.containsKey(iterationUUID)) {
+                            backlogs.addAll(defectHM.get(iterationUUID));
+                        }
+                        if (testsetHM.containsKey(iterationUUID)) {
+                            backlogs.addAll(testsetHM.get(iterationUUID));
+                        }
+
                         List<TimeEntryValue> timeEntryValues = new ArrayList<>();
-                        for (HierarchicalRequirement hierarchicalRequirement : hierarchicalRequirements) {
+                        for (Backlog backlog : backlogs) {
 
-                            if (!hierarchicalRequirement.getProjectUUID().equals(project.getUUID())) {
+                            if (!backlog.getProjectUUID().equals(project.getUUID())) {
                                 continue;
                             }
 
-                            List<Task> tasks = rallyClient.getTasks(hierarchicalRequirement.getId());
-                            for (Task task : tasks) {
-                                if (timeEntryItemsHM.containsKey(task.getUUID())) {
-                                    List<TimeEntryItem> timeEntryItems = timeEntryItemsHM.get(task.getUUID());
-                                    for (TimeEntryItem timeEntryItem : timeEntryItems) {
-                                        List<TimeEntryValue> thisTimeEntryValues =
-                                                timeEntryValuesHM.get(timeEntryItem.getUUID());
-                                        timeEntryValues.addAll(thisTimeEntryValues);
+                            String backlogUUID = backlog.getUUID();
+                            if (timeEntryItemsHM.containsKey(backlogUUID)) {
+                                List<TimeEntryItem> timeEntryItems = timeEntryItemsHM.get(backlogUUID);
+                                String timeEntryItemUUID = "";
+                                for (TimeEntryItem timeEntryItem : timeEntryItems) {
+                                    timeEntryItemUUID = timeEntryItem.getUUID();
+                                    if (timeEntryValuesHM.containsKey(timeEntryItemUUID)) {
+                                        timeEntryValues.addAll(timeEntryValuesHM.get(timeEntryItemUUID));
                                     }
+
                                 }
                             }
                         }

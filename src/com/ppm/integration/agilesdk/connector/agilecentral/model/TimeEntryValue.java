@@ -1,8 +1,8 @@
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
-import net.sf.json.JSONObject;
-
 import java.util.Date;
+
+import net.sf.json.JSONObject;
 
 public class TimeEntryValue extends Entity {
 
@@ -18,8 +18,7 @@ public class TimeEntryValue extends Entity {
         return check("Hours") ? jsonObject.getInt("Hours") : 0;
     }
 
-    // add
-    public String getItemUUID() {
+    public String getTimeEntryItemUUID() {
         JSONObject iteration = this.jsonObject.getJSONObject("TimeEntryItem");
         if (!iteration.isNullObject()) {
             return iteration.getString("_refObjectUUID");
