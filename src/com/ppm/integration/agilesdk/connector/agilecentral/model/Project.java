@@ -15,4 +15,16 @@ public class Project extends Entity {
     public String getReleasesRef() {
         return this.jsonObject.getJSONObject("Releases").getString("_ref");
     }
+
+    public int getChildrenCount() {
+        return this.jsonObject.getJSONObject("Children").getInt("Count");
+    }
+
+    public String getParentUUID() {
+        JSONObject iteration = this.jsonObject.getJSONObject("Parent");
+        if (!iteration.isNullObject()) {
+            return iteration.getString("_refObjectUUID");
+        }
+        return null;
+    }
 }
