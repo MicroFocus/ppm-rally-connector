@@ -209,7 +209,6 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
             @Override
             public List<ExternalTask> getRootTasks() {
                 List<ExternalTask> externalTasks = new ArrayList<ExternalTask>();
-                System.out.println(levelDDL + "==iterationDDL==" + iterationDDL);
                 switch (levelDDL) {
                     case Constants.KEY_LEVEL_ITERATION:
                         if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
