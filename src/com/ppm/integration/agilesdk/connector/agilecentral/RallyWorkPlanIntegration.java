@@ -263,14 +263,6 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
                         break;
                 }
 
-                for (int i = 0; i < externalTasks.size(); i++) {
-                    for (int j = 0; j < externalTasks.get(i).getChildren().size(); j++) {
-                        System.out.println("id==" + externalTasks.get(i).getId());
-                        System.out.println("name==" + externalTasks.get(i).getName());
-                        System.out.println("Cname==" + externalTasks.get(i).getChildren().get(j).getName());
-                    }
-                }
-
                 return externalTasks;
             }
         };
