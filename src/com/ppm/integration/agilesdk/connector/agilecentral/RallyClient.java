@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 
 import com.ppm.integration.agilesdk.connector.agilecentral.model.HierarchicalRequirement;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
@@ -175,7 +176,6 @@ public class RallyClient {
         List<Iteration> iterations = getIterations(projectId);
         for (int i = 0; i < jsonArray.size(); i++) {
             Release release = new Release(jsonArray.getJSONObject(i));
-            System.out.println("releaseName==" + release.getName());
             // fill ExternalTasks
             List<Iteration> thisIterations = getIterationsByRelease(iterations, release);
             fillHierarchicalRequirement(thisIterations, hierarchicalRequirements);
@@ -219,11 +219,11 @@ public class RallyClient {
 
     public List<Iteration> getIterationsByRelease(List<Iteration> iterations, Release release) {
         List<Iteration> thisIterations = new ArrayList<>();
-        Date releaseStart = release.getScheduleStart();
-        Date releaseEnd = release.getScheduleFinish();
+        Date releaseStart = release.getScheduledStart();
+        Date releaseEnd = release.getScheduledFinish();
 
         for (Iteration iteration : iterations) {
-            Date iterationStart = iteration.getScheduleStart();
+            Date iterationStart = iteration.getScheduledStart();
             if (iterationStart.getTime() > releaseStart.getTime() && iterationStart.getTime() < releaseEnd.getTime()) {
                 thisIterations.add(iteration);
             }
@@ -398,14 +398,14 @@ public class RallyClient {
     }
 
     public List<PortfolioInitiative> getAllPortfolioInitiatives(String projectId) {
-        String portfolioeURI = "/slm/webservice/v2.0/portfolioitem/initiative";
-        JSONArray jsonArray = helper.getAll(portfolioeURI);
+        String portfolioInitiativeURI = "/slm/webservice/v2.0/portfolioitem/initiative";
+        JSONArray jsonArray = helper.getAll(portfolioInitiativeURI);
         List<PortfolioInitiative> initiatives = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             PortfolioInitiative initiative = new PortfolioInitiative(jsonArray.getJSONObject(i));
             if (initiative.getProjectID().equals(projectId)) {
                 // fill ExternalTasks
-                List<PortfolioFeature> features = getPortfolioFeatures(initiative.getId());
+                List<PortfolioFeature> features = getInitiativeFeatures(initiative.getId());
                 for (PortfolioFeature feature : features) {
                     initiative.addFeature(feature);
                 }
@@ -447,8 +447,8 @@ public class RallyClient {
 
     // feature
     public List<PortfolioFeature> getPortfolioFeatures(String projectId) {
-        String portfolioThemeURI = "/slm/webservice/v2.0/portfolioitem/feature";
-        JSONArray jsonArray = helper.getAll(portfolioThemeURI);
+        String portfolioFeatureURI = "/slm/webservice/v2.0/portfolioitem/feature";
+        JSONArray jsonArray = helper.getAll(portfolioFeatureURI);
         List<PortfolioFeature> features = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             PortfolioFeature feature = new PortfolioFeature(jsonArray.getJSONObject(i));
@@ -460,8 +460,8 @@ public class RallyClient {
     }
 
     public List<PortfolioFeature> getAllPortfolioFeatures(String projectId) {
-        String portfolioThemeURI = "/slm/webservice/v2.0/portfolioitem/feature";
-        JSONArray jsonArray = helper.getAll(portfolioThemeURI);
+        String portfolioFeatureURI = "/slm/webservice/v2.0/portfolioitem/feature";
+        JSONArray jsonArray = helper.getAll(portfolioFeatureURI);
         List<PortfolioFeature> features = new ArrayList<>();
         for (int i = 0; i < jsonArray.size(); i++) {
             PortfolioFeature feature = new PortfolioFeature(jsonArray.getJSONObject(i));
@@ -537,5 +537,30 @@ public class RallyClient {
         List<User> users = getUsers();
         fillUser(hierarchicalRequirements, users);
         return hierarchicalRequirements;
+    }
+
+    // change
+    public HashMap<String, List<JSONObject>> getAllData() {
+        HashMap<String, List<JSONObject>> hms = new HashMap<>();
+
+        String URI = "/slm/webservice/v2.0/artifact";
+        JSONArray jsonArray = helper.getAll(URI);
+        System.out.println("size = " + jsonArray.size());
+        for (int i = 0; i < jsonArray.size(); i++) {
+            JSONObject jsonObject = (JSONObject)jsonArray.get(i);
+            String type = jsonObject.get("_type").toString();
+
+            if (hms.containsKey(type)) {
+                List<JSONObject> jsonObjects = hms.get(type);
+                jsonObjects.add(jsonObject);
+                hms.put(type, jsonObjects);
+            } else {
+                List<JSONObject> jsonObjects = new ArrayList<>();
+                jsonObjects.add(jsonObject);
+                hms.put(type, jsonObjects);
+            }
+        }
+
+        return hms;
     }
 }

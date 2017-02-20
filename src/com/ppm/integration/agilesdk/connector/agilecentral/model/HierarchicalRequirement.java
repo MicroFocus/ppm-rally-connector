@@ -9,6 +9,7 @@ import net.sf.json.JSONObject;
 
 import com.ppm.integration.agilesdk.connector.agilecentral.model.portfolio.PortfolioFeature;
 import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
 import com.ppm.integration.agilesdk.provider.UserProvider;
 
 public class HierarchicalRequirement extends Entity {
@@ -105,20 +106,44 @@ public class HierarchicalRequirement extends Entity {
         this.portfolioFeature = portfolioFeature;
     }
 
+    public PortfolioFeature getPortfolioFeature() {
+        return this.portfolioFeature;
+    }
+
     public void setHierarchicalRequirement(HierarchicalRequirement hierarchicalRequirement) {
         this.hierarchicalRequirement = hierarchicalRequirement;
+    }
+
+    public HierarchicalRequirement getHierarchicalRequirement() {
+        return this.hierarchicalRequirement;
     }
 
     public void setUser(User user) {
         this.user = user;
     }
 
-    public Date getScheduleStart() {
-        return iteration.getScheduleStart();
+    @Override
+    public Date getScheduledStart() {
+        if (hierarchicalRequirement != null) {
+            return hierarchicalRequirement.getScheduledStart();
+        } else if (iteration != null) {
+            return iteration.getScheduledStart();
+        } else if (release != null) {
+            return release.getScheduledStart();
+        }
+        return portfolioFeature.getScheduledStart();
     }
 
-    public Date getScheduleFinish() {
-        return iteration.getScheduleFinish();
+    @Override
+    public Date getScheduledFinish() {
+        if (iteration != null) {
+            return iteration.getScheduledFinish();
+        } else if (release != null) {
+            return release.getScheduledFinish();
+        } else if (portfolioFeature != null) {
+            return portfolioFeature.getScheduledFinish();
+        }
+        return hierarchicalRequirement.getScheduledFinish();
     }
 
     @Override
@@ -129,7 +154,11 @@ public class HierarchicalRequirement extends Entity {
 
     @Override
     public String getOwnerRole() {
-        // change
+        JSONObject owner = check("Owner") ? this.jsonObject.getJSONObject("Owner") : null;
+        if (!owner.isNullObject()) {
+            return owner.getString("_refObjectName");
+        }
+
         return this.user == null ? null : this.user.getRole();
     }
 
@@ -171,5 +200,63 @@ public class HierarchicalRequirement extends Entity {
     @Override
     public List<ExternalTask> getChildren() {
         return hierarchicalRequirements;
+    }
+
+    @Override
+    public List<ExternalTaskActuals> getActuals() {
+        List<ExternalTaskActuals> actuals = new ArrayList<>();
+
+        actuals.add(new ExternalTaskActuals() {
+
+            @Override
+            public double getScheduledEffort() {
+                if (jsonObject.getString("TaskEstimateTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskEstimateTotal"));
+            }
+
+            @Override
+            public Date getActualStart() {
+                return null;
+            }
+
+            @Override
+            public Date getActualFinish() {
+                return null;
+            }
+
+            @Override
+            public double getActualEffort() {
+                if (jsonObject.getString("TaskActualTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskActualTotal"));
+            }
+
+            @Override
+            public double getPercentComplete() {
+                return 0.0D;
+            }
+
+            @Override
+            public long getResourceId() {
+                return -1L;
+            }
+
+            @Override
+            public Double getEstimatedRemainingEffort() {
+                if (jsonObject.getString("TaskRemainingTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskRemainingTotal"));
+            }
+
+            @Override
+            public Date getEstimatedFinishDate() {
+                return null;
+            }
+        });
+        return actuals;
     }
 }

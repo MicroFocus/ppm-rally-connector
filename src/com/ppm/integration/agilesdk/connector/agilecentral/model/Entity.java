@@ -1,12 +1,15 @@
+
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
+
+import java.util.Date;
+import java.util.List;
+
+import javax.xml.bind.DatatypeConverter;
+
+import net.sf.json.JSONObject;
 
 import com.ppm.integration.agilesdk.pm.ExternalTask;
 import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
-import net.sf.json.JSONObject;
-
-import javax.xml.bind.DatatypeConverter;
-import java.util.Date;
-import java.util.List;
 
 public class Entity extends ExternalTask {
 
@@ -32,36 +35,54 @@ public class Entity extends ExternalTask {
         return check("_type") ? jsonObject.getString("_type") : null;
     }
 
-    @Override public String getId() {
+    @Override
+    public String getId() {
         return check("ObjectID") ? jsonObject.getString("ObjectID") : null;
     }
 
-    @Override public String getName() {
+    @Override
+    public String getName() {
         return check("Name") ? jsonObject.getString("Name") : null;
     }
 
-    @Override public long getOwnerId() {
+    @Override
+    public long getOwnerId() {
         return -1;
     }
 
-    @Override public String getOwnerRole() {
+    @Override
+    public String getOwnerRole() {
         return null;
     }
 
-    @Override public List<ExternalTask> getChildren() {
+    @Override
+    public List<ExternalTask> getChildren() {
         return null;
     }
 
-    @Override public TaskStatus getStatus() {
+    @Override
+    public TaskStatus getStatus() {
         return null;
     }
 
-    @Override public List<ExternalTaskActuals> getActuals() {
-        return null;
-    }
-
-    @Override public boolean isMilestone() {
+    @Override
+    public boolean isMilestone() {
         return false;
+    }
+
+    @Override
+    public Date getScheduledStart() {
+        return adjustStartDateTime(new Date());
+    }
+
+    @Override
+    public Date getScheduledFinish() {
+        return adjustFinishDateTime(new Date());
+    }
+
+    @Override
+    public List<ExternalTaskActuals> getActuals() {
+        return null;
     }
 
 }

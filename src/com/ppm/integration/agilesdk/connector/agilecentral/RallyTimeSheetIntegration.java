@@ -225,6 +225,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                     for (final Iteration iteration : iterations) {
                         String iterationUUID = iteration.getUUID();
                         List<HierarchicalRequirement> backlogs = new ArrayList<>();
+                        if (hierarchicalRequirementHM.containsKey(iterationUUID)) {
+                            backlogs.addAll(hierarchicalRequirementHM.get(iterationUUID));
+                        }
 
                         List<TimeEntryValue> timeEntryValues = new ArrayList<>();
                         for (HierarchicalRequirement backlog : backlogs) {

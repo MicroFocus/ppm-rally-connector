@@ -8,6 +8,7 @@ import java.util.List;
 import net.sf.json.JSONObject;
 
 import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
 
 public class Iteration extends Entity {
 
@@ -31,11 +32,13 @@ public class Iteration extends Entity {
         this.release = release;
     }
 
-    public Date getScheduleStart() {
+    @Override
+    public Date getScheduledStart() {
         return convertToDate(check("StartDate") ? jsonObject.getString("StartDate") : null);
     }
 
-    public Date getScheduleFinish() {
+    @Override
+    public Date getScheduledFinish() {
         return convertToDate(check("EndDate") ? jsonObject.getString("EndDate") : null);
     }
 
@@ -62,4 +65,61 @@ public class Iteration extends Entity {
         return hierarchicalRequirements;
     }
 
+    @Override
+    public List<ExternalTaskActuals> getActuals() {
+        List<ExternalTaskActuals> actuals = new ArrayList<>();
+
+        actuals.add(new ExternalTaskActuals() {
+
+            @Override
+            public double getScheduledEffort() {
+                if (jsonObject.getString("TaskEstimateTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskEstimateTotal"));
+            }
+
+            @Override
+            public Date getActualStart() {
+                return null;
+            }
+
+            @Override
+            public Date getActualFinish() {
+                return null;
+            }
+
+            @Override
+            public double getActualEffort() {
+                if (jsonObject.getString("TaskActualTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskActualTotal"));
+            }
+
+            @Override
+            public double getPercentComplete() {
+                return 0.0D;
+            }
+
+            @Override
+            public long getResourceId() {
+                return -1L;
+            }
+
+            @Override
+            public Double getEstimatedRemainingEffort() {
+                if (jsonObject.getString("TaskRemainingTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskRemainingTotal"));
+            }
+
+            @Override
+            public Date getEstimatedFinishDate() {
+                return null;
+            }
+        });
+        return actuals;
+    }
 }
