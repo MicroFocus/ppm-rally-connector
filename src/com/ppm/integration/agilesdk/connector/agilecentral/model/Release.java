@@ -92,7 +92,6 @@ public class Release extends Entity {
 
             @Override
             public double getActualEffort() {
-                System.out.println("1# " + jsonObject.getString("TaskActualTotal").equals("null"));
                 if (jsonObject.getString("TaskActualTotal").equals("null")) {
                     return 0.0D;
                 }
