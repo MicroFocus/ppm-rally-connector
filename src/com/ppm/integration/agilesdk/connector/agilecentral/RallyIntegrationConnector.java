@@ -13,7 +13,7 @@ public class RallyIntegrationConnector extends IntegrationConnector {
 
     @Override
     public String getExternalApplicationName() {
-        return "CA Central Central (Rally)";
+        return "CA Agile Central (Rally)";
     }
 
     @Override

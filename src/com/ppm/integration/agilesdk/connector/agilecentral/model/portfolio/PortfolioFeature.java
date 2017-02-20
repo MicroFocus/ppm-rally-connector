@@ -24,6 +24,7 @@ public class PortfolioFeature extends PortfolioItem {
     }
 
     public void addUserStory(HierarchicalRequirement hierarchicalRequirement) {
+        hierarchicalRequirement.setPortfolioFeature(this);
         this.userStories.add(hierarchicalRequirement);
     }
 

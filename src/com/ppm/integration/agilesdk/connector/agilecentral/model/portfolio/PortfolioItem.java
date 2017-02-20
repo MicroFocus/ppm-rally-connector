@@ -1,10 +1,15 @@
 
 package com.ppm.integration.agilesdk.connector.agilecentral.model.portfolio;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+
 import net.sf.json.JSONObject;
 
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Entity;
 import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
 
 public class PortfolioItem extends Entity {
 
@@ -47,6 +52,65 @@ public class PortfolioItem extends Entity {
     public TaskStatus getStatus() {
         ExternalTask.TaskStatus result = ExternalTask.TaskStatus.UNKNOWN;
         return result;
+    }
+
+    @Override
+    public Date getScheduledStart() {
+        return convertToDate(check("PlannedStartDate") ? jsonObject.getString("PlannedStartDate") : null);
+    }
+
+    @Override
+    public Date getScheduledFinish() {
+        return convertToDate(check("PlannedEndDate") ? jsonObject.getString("PlannedEndDate") : null);
+    }
+
+    @Override
+    public List<ExternalTaskActuals> getActuals() {
+        List<ExternalTaskActuals> actuals = new ArrayList<>();
+
+        actuals.add(new ExternalTaskActuals() {
+
+            @Override
+            public double getScheduledEffort() {
+                return 0.0D;
+            }
+
+            @Override
+            public Date getActualStart() {
+                return convertToDate(check("ActualStartDate") ? jsonObject.getString("ActualStartDate") : null);
+            }
+
+            @Override
+            public Date getActualFinish() {
+                return convertToDate(check("ActualEndDate") ? jsonObject.getString("ActualEndDate") : null);
+            }
+
+            @Override
+            public double getActualEffort() {
+                return 0.0D;
+            }
+
+            @Override
+            public double getPercentComplete() {
+                return jsonObject.getDouble("PercentDoneByStoryPlanEstimate") * 100;
+            }
+
+            @Override
+            public long getResourceId() {
+                return -1L;
+            }
+
+            @Override
+            public Double getEstimatedRemainingEffort() {
+                return null;
+            }
+
+            @Override
+            public Date getEstimatedFinishDate() {
+                return null;
+            }
+        });
+        return actuals;
     }
 
 }
