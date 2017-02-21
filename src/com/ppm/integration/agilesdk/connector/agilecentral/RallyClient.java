@@ -58,8 +58,14 @@ public class RallyClient {
     }
 
     public List<Project> getProjects(String workspaceId) {
-        String projectsURI = "/slm/webservice/v2.0/Workspace/?/Projects";
-        projectsURI = projectsURI.replace("?", workspaceId);
+        String projectsURI = "";
+        if (workspaceId.equals(Constants.KEY_ALL_ITEMS)) {
+            projectsURI = "/slm/webservice/v2.0/Project";
+        } else {
+            projectsURI = "/slm/webservice/v2.0/Workspace/?/Projects";
+            projectsURI = projectsURI.replace("?", workspaceId);
+        }
+
         JSONArray jsonArray = helper.getAll(projectsURI);
         List<Project> projects = new ArrayList<Project>(jsonArray.size());
         for (int i = 0; i < jsonArray.size(); i++) {
