@@ -202,6 +202,8 @@ public class HierarchicalRequirement extends Entity {
         return hierarchicalRequirements;
     }
 
+    // actuals
+
     @Override
     public List<ExternalTaskActuals> getActuals() {
         List<ExternalTaskActuals> actuals = new ArrayList<>();
@@ -210,32 +212,41 @@ public class HierarchicalRequirement extends Entity {
 
             @Override
             public double getScheduledEffort() {
-                if (jsonObject.getString("TaskEstimateTotal").equals("null")) {
-                    return 0.0D;
-                }
-                return Double.parseDouble(jsonObject.getString("TaskEstimateTotal"));
+                return this.getTaskEstimateTotal();
             }
 
             @Override
             public Date getActualStart() {
-                return null;
+                if (iteration != null) {
+                    return iteration.getScheduledStart();
+                } else if (release != null) {
+                    return release.getScheduledStart();
+                } else if (portfolioFeature != null) {
+                    return portfolioFeature.getScheduledStart();
+                }
+                return hierarchicalRequirement.getScheduledStart();
             }
 
             @Override
             public Date getActualFinish() {
+                if (this.getScheduleState().equals("Completed") || this.getScheduleState().equals("Accepted")) {
+                    return getLastUpdateDate();
+                }
                 return null;
             }
 
             @Override
             public double getActualEffort() {
-                if (jsonObject.getString("TaskActualTotal").equals("null")) {
-                    return 0.0D;
-                }
-                return Double.parseDouble(jsonObject.getString("TaskActualTotal"));
+                return this.getTaskActualTotal();
             }
 
             @Override
             public double getPercentComplete() {
+                if (this.getScheduleState().equals("Completed") || this.getScheduleState().equals("Accepted")) {
+                    return 1.0D * 100;
+                } else if (this.getTaskEstimateTotal() != 0.0D) {
+                    return (1 - this.getTaskRemainingTotal() / this.getTaskEstimateTotal()) * 100;
+                }
                 return 0.0D;
             }
 
@@ -246,15 +257,50 @@ public class HierarchicalRequirement extends Entity {
 
             @Override
             public Double getEstimatedRemainingEffort() {
+                return this.getTaskRemainingTotal();
+            }
+
+            @Override
+            public Date getEstimatedFinishDate() {
+                if (iteration != null) {
+                    return iteration.getScheduledFinish();
+                } else if (release != null) {
+                    return release.getScheduledFinish();
+                } else if (portfolioFeature != null) {
+                    return portfolioFeature.getScheduledFinish();
+                }
+                return hierarchicalRequirement.getScheduledFinish();
+            }
+
+            // task
+            public double getTaskEstimateTotal() {
+                if (jsonObject.getString("TaskEstimateTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskEstimateTotal"));
+            }
+
+            public double getTaskActualTotal() {
+                if (jsonObject.getString("TaskActualTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskActualTotal"));
+            }
+
+            public double getTaskRemainingTotal() {
                 if (jsonObject.getString("TaskRemainingTotal").equals("null")) {
                     return 0.0D;
                 }
                 return Double.parseDouble(jsonObject.getString("TaskRemainingTotal"));
             }
 
-            @Override
-            public Date getEstimatedFinishDate() {
-                return null;
+            // last update date
+            public Date getLastUpdateDate() {
+                return convertToDate(check("LastUpdateDate") ? jsonObject.getString("LastUpdateDate") : null);
+            }
+
+            public String getScheduleState() {
+                return check("ScheduleState") ? jsonObject.getString("ScheduleState") : null;
             }
         });
         return actuals;
