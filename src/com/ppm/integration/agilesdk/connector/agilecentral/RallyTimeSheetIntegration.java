@@ -75,7 +75,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                     }
 
                 },
-                new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", false) {
+                new RallyEntityDropdown(Constants.KEY_WORKSPACE, "WORKSPACE", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -91,6 +91,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
 
                         List<Option> options = new LinkedList<Option>();
+                        options.add(new Option(Constants.KEY_ALL_ITEMS, "All WorkSpaces"));
                         for (Workspace w : rallyClient.getWorkspaces(values.get(Constants.KEY_SUBSCRIPTION))) {
                             options.add(new Option(w.getId(), w.getName()));
                         }
@@ -99,7 +100,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                     }
 
                 },
-                new RallyEntityDropdown(Constants.KEY_PROJECT, "PROJECT", false) {
+                new RallyEntityDropdown(Constants.KEY_PROJECT, "PROJECT", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -115,6 +116,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
 
                         List<Option> options = new LinkedList<Option>();
+                        options.add(new Option(Constants.KEY_ALL_ITEMS, "All Projects"));
                         for (Project p : rallyClient.getProjects(values.get(Constants.KEY_WORKSPACE))) {
                             int count = p.getChildrenCount();
                             if (count > 0) {

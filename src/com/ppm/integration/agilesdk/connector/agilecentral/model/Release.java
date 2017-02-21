@@ -52,13 +52,12 @@ public class Release extends Entity {
         ExternalTask.TaskStatus result = ExternalTask.TaskStatus.UNKNOWN;
         // Defined,In-Progress,Completed,Accepted
         switch (state) {
-            case "Defined":
+            case "Planning":
                 result = ExternalTask.TaskStatus.READY;
                 break;
-            case "In-Progress":
+            case "Active":
                 result = ExternalTask.TaskStatus.IN_PROGRESS;
                 break;
-            case "Completed":
             case "Accepted":
                 result = ExternalTask.TaskStatus.COMPLETED;
                 break;
@@ -74,32 +73,31 @@ public class Release extends Entity {
 
             @Override
             public double getScheduledEffort() {
-                if (jsonObject.getString("TaskEstimateTotal").equals("null")) {
-                    return 0.0D;
-                }
-                return Double.parseDouble(jsonObject.getString("TaskEstimateTotal"));
+                return this.getTaskEstimateTotal();
             }
 
             @Override
             public Date getActualStart() {
-                return null;
+                return convertToDate(check("ReleaseStartDate") ? jsonObject.getString("ReleaseStartDate") : null);
             }
 
             @Override
             public Date getActualFinish() {
-                return null;
+                return convertToDate(check("ReleaseEndDate") ? jsonObject.getString("ReleaseEndDate") : null);
             }
 
             @Override
             public double getActualEffort() {
-                if (jsonObject.getString("TaskActualTotal").equals("null")) {
-                    return 0.0D;
-                }
-                return Double.parseDouble(jsonObject.getString("TaskActualTotal"));
+                return this.getTaskActualTotal();
             }
 
             @Override
             public double getPercentComplete() {
+                if (this.getScheduleState().equals("Accepted")) {
+                    return 1.0D * 100;
+                } else if (this.getTaskEstimateTotal() != 0.0D) {
+                    return (1 - this.getTaskRemainingTotal() / this.getTaskEstimateTotal()) * 100;
+                }
                 return 0.0D;
             }
 
@@ -110,15 +108,39 @@ public class Release extends Entity {
 
             @Override
             public Double getEstimatedRemainingEffort() {
+                return this.getTaskRemainingTotal();
+            }
+
+            @Override
+            public Date getEstimatedFinishDate() {
+                return convertToDate(check("ReleaseEndDate") ? jsonObject.getString("ReleaseEndDate") : null);
+            }
+
+            // task
+            public double getTaskEstimateTotal() {
+                if (jsonObject.getString("TaskEstimateTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskEstimateTotal"));
+            }
+
+            public double getTaskActualTotal() {
+                if (jsonObject.getString("TaskActualTotal").equals("null")) {
+                    return 0.0D;
+                }
+                return Double.parseDouble(jsonObject.getString("TaskActualTotal"));
+            }
+
+            public double getTaskRemainingTotal() {
                 if (jsonObject.getString("TaskRemainingTotal").equals("null")) {
                     return 0.0D;
                 }
                 return Double.parseDouble(jsonObject.getString("TaskRemainingTotal"));
             }
 
-            @Override
-            public Date getEstimatedFinishDate() {
-                return null;
+            // state
+            public String getScheduleState() {
+                return check("State") ? jsonObject.getString("State") : null;
             }
         });
         return actuals;
