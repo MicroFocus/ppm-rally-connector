@@ -141,7 +141,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                     public List<Option> getDynamicalOptions(ValueSet values) {
                         List<Option> options = new LinkedList<Option>();
                         options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_ITERATION, "Iteration"));
-                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "Work Item"));
+                        options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "User Story"));
                         return options;
                     }
                 }, new LineBreaker(),
