@@ -21,7 +21,7 @@ public class PortfolioItem extends Entity {
     public String getName() {
         String formattedId = check("FormattedID") ? jsonObject.getString("FormattedID") : null;
         String name = check("Name") ? jsonObject.getString("Name") : null;
-        return "[" + formattedId + "] " + name;
+        return formattedId + ": " + name;
     }
 
     public String getChildrenUUID() {
@@ -56,12 +56,22 @@ public class PortfolioItem extends Entity {
 
     @Override
     public Date getScheduledStart() {
-        return convertToDate(check("PlannedStartDate") ? jsonObject.getString("PlannedStartDate") : null);
+        if (check("PlannedStartDate")) {
+            if (!jsonObject.getString("PlannedStartDate").equals("null")) {
+                return convertToDate(jsonObject.getString("PlannedStartDate"));
+            }
+        }
+        return convertToDate(check("CreationDate") ? jsonObject.getString("CreationDate") : null);
     }
 
     @Override
     public Date getScheduledFinish() {
-        return convertToDate(check("PlannedEndDate") ? jsonObject.getString("PlannedEndDate") : null);
+        if (check("PlannedEndDate")) {
+            if (!jsonObject.getString("PlannedEndDate").equals("null")) {
+                return convertToDate(jsonObject.getString("PlannedEndDate"));
+            }
+        }
+        return adjustFinishDateTime(new Date());
     }
 
     @Override
