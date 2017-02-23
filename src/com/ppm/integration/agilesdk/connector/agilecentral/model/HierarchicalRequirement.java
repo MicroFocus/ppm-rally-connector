@@ -194,7 +194,7 @@ public class HierarchicalRequirement extends Entity {
     public String getName() {
         String formattedId = check("FormattedID") ? jsonObject.getString("FormattedID") : null;
         String name = check("Name") ? jsonObject.getString("Name") : null;
-        return "[" + formattedId + "] " + name;
+        return formattedId + ": " + name;
     }
 
     @Override
@@ -229,10 +229,14 @@ public class HierarchicalRequirement extends Entity {
 
             @Override
             public Date getActualFinish() {
-                if (this.getScheduleState().equals("Completed") || this.getScheduleState().equals("Accepted")) {
-                    return getLastUpdateDate();
+                if (hierarchicalRequirement != null) {
+                    return hierarchicalRequirement.getScheduledFinish();
+                } else if (iteration != null) {
+                    return iteration.getScheduledFinish();
+                } else if (release != null) {
+                    return release.getScheduledFinish();
                 }
-                return null;
+                return portfolioFeature.getScheduledFinish();
             }
 
             @Override
@@ -244,7 +248,8 @@ public class HierarchicalRequirement extends Entity {
             public double getPercentComplete() {
                 if (this.getScheduleState().equals("Completed") || this.getScheduleState().equals("Accepted")) {
                     return 1.0D * 100;
-                } else if (this.getTaskEstimateTotal() != 0.0D) {
+                } else if (this.getTaskEstimateTotal() != 0.0D
+                        & (this.getTaskRemainingTotal() < this.getTaskEstimateTotal())) {
                     return (1 - this.getTaskRemainingTotal() / this.getTaskEstimateTotal()) * 100;
                 }
                 return 0.0D;
@@ -294,15 +299,12 @@ public class HierarchicalRequirement extends Entity {
                 return Double.parseDouble(jsonObject.getString("TaskRemainingTotal"));
             }
 
-            // last update date
-            public Date getLastUpdateDate() {
-                return convertToDate(check("LastUpdateDate") ? jsonObject.getString("LastUpdateDate") : null);
-            }
-
+            // state
             public String getScheduleState() {
                 return check("ScheduleState") ? jsonObject.getString("ScheduleState") : null;
             }
         });
         return actuals;
     }
+
 }

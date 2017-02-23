@@ -95,7 +95,8 @@ public class Iteration extends Entity {
             public double getPercentComplete() {
                 if (this.getScheduleState().equals("Accepted")) {
                     return 1.0D * 100;
-                } else if (this.getTaskEstimateTotal() != 0.0D) {
+                } else if (this.getTaskEstimateTotal() != 0.0D
+                        & (this.getTaskRemainingTotal() < this.getTaskEstimateTotal())) {
                     return (1 - this.getTaskRemainingTotal() / this.getTaskEstimateTotal()) * 100;
                 }
                 return 0.0D;
@@ -145,4 +146,5 @@ public class Iteration extends Entity {
         });
         return actuals;
     }
+
 }

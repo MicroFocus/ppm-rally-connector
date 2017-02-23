@@ -246,15 +246,15 @@ public class RallyClient {
 
         for (int i = 0; i < jsonArray.size(); i++) {
             TimeEntryItem item = new TimeEntryItem(jsonArray.getJSONObject(i));
-            String WorkProductUUID = item.getWorkProductUUID();
-            if (hms.containsKey(item.getWorkProductUUID())) {
-                List<TimeEntryItem> items = hms.get(item.getWorkProductUUID());
+            String taskUUID = item.getTaskUUID();
+            if (hms.containsKey(taskUUID)) {
+                List<TimeEntryItem> items = hms.get(taskUUID);
                 items.add(item);
-                hms.put(WorkProductUUID, items);
+                hms.put(taskUUID, items);
             } else {
                 List<TimeEntryItem> items = new ArrayList<>();
                 items.add(item);
-                hms.put(WorkProductUUID, items);
+                hms.put(taskUUID, items);
             }
         }
         return hms;
@@ -545,26 +545,18 @@ public class RallyClient {
         return hierarchicalRequirements;
     }
 
-    // change
-    public HashMap<String, List<JSONObject>> getAllData() {
-        HashMap<String, List<JSONObject>> hms = new HashMap<>();
+    // all artifact data
+    public HashMap<String, JSONObject> getAllData() {
+        HashMap<String, JSONObject> hms = new HashMap<>();
 
         String URI = "/slm/webservice/v2.0/artifact";
         JSONArray jsonArray = helper.getAll(URI);
-        System.out.println("size = " + jsonArray.size());
+
         for (int i = 0; i < jsonArray.size(); i++) {
             JSONObject jsonObject = (JSONObject)jsonArray.get(i);
-            String type = jsonObject.get("_type").toString();
+            String UUID = jsonObject.get("_refObjectUUID").toString();
 
-            if (hms.containsKey(type)) {
-                List<JSONObject> jsonObjects = hms.get(type);
-                jsonObjects.add(jsonObject);
-                hms.put(type, jsonObjects);
-            } else {
-                List<JSONObject> jsonObjects = new ArrayList<>();
-                jsonObjects.add(jsonObject);
-                hms.put(type, jsonObjects);
-            }
+            hms.put(UUID, jsonObject);
         }
 
         return hms;
