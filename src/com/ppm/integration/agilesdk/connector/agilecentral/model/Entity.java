@@ -24,7 +24,7 @@ public class Entity extends ExternalTask {
     }
 
     protected Date convertToDate(String date) {
-        return date != null && date != "null" ? DatatypeConverter.parseDateTime(date).getTime() : null;
+        return date != null && date != "null" ? DatatypeConverter.parseDateTime(date.split("T")[0]).getTime() : null;
     }
 
     public String getUUID() {

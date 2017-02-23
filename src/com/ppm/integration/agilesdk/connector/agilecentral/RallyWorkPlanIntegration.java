@@ -270,7 +270,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
     @Override
     public String getCustomDetailPage() {
-        return "/itg/integrationcenter/agm-connector-impl-web/agm-graphs.jsp";
+        return null;
     }
 
 }

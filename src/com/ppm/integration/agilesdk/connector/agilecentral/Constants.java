@@ -18,16 +18,24 @@ public class Constants {
     public static final String KEY_WORKSPACE = "WORKSPACE";
 
     public static final String KEY_PROJECT = "PROJECT";
-    
+
     public static final String KEY_PARENT_PROJECT_LABEL = "[Parent]";
 
     public static final String KEY_USE_GLOBAL_PROXY = "use_global_proxy";
 
     public static final String KEY_DATA_DETAIL_LEVEL = "dataDetailLevel";
 
+    public static final String KEY_DATA_DETAIL_LEVEL_USERSTORY = "UserStory";
+
     public static final String KEY_DATA_DETAIL_LEVEL_ITERATION = "Iteration";
 
-    public static final String KEY_DATA_DETAIL_LEVEL_USERSTORY = "UserStory";
+    public static final String KEY_DATA_DETAIL_LEVEL_RELEASE = "Release";
+
+    public static final String KEY_DATA_DETAIL_LEVEL_FEATURE = "PortfolioItem/Feature";
+
+    public static final String KEY_DATA_DETAIL_LEVEL_INITIATIVE = "PortfolioItem/Initiative";
+
+    public static final String KEY_DATA_DETAIL_LEVEL_THEME = "PortfolioItem/Theme";
 
     public static final String KEY_REMOVE_ITEMS = "remove items";
 
