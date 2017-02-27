@@ -7,6 +7,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+import org.apache.wink.client.ClientRuntimeException;
+
 import com.ppm.integration.agilesdk.ValueSet;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Iteration;
 import com.ppm.integration.agilesdk.connector.agilecentral.model.Project;
@@ -29,6 +32,16 @@ import com.ppm.integration.agilesdk.ui.PlainText;
 public class RallyWorkPlanIntegration extends WorkPlanIntegration {
     String strTemp = "yyyy-MM-dd HH:mm:ss";
 
+    private final Logger logger = Logger.getLogger(this.getClass());
+
+    public RallyClient getRallyClient(ValueSet values) {
+        Config config = new Config();
+        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
+        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME), values.get(Constants.KEY_PASSWORD));
+        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+        return rallyClient;
+    }
+
     @Override
     public List<Field> getMappingConfigurationFields(WorkPlanIntegrationContext context, final ValueSet values) {
         return Arrays.asList(new Field[] {new PlainText(Constants.KEY_USERNAME, "USERNAME", "dan@acme.com", true),
@@ -42,11 +55,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         Subscription subscription = rallyClient.getSubscription();
                         return Arrays.asList(new Option[] {new Option(subscription.getId(), subscription.getName())});
@@ -61,11 +70,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         for (Workspace w : rallyClient.getWorkspaces(values.get(Constants.KEY_SUBSCRIPTION))) {
@@ -84,11 +89,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         for (Project p : rallyClient.getProjects(values.get(Constants.KEY_WORKSPACE))) {
@@ -113,11 +114,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         options.add(new Option(Constants.KEY_LEVEL_ITERATION, "Iteration WorkItems"));
@@ -138,11 +135,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         String Level = values.get(Constants.KEY_LEVEL_DDL);
@@ -209,57 +202,68 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
             @Override
             public List<ExternalTask> getRootTasks() {
                 List<ExternalTask> externalTasks = new ArrayList<ExternalTask>();
-                switch (levelDDL) {
-                    case Constants.KEY_LEVEL_ITERATION:
-                        if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
-                            externalTasks.add(rallyClient.getIteration(projectId, iterationDDL));
-                        } else {
-                            for (Iteration iteration : rallyClient.getAllIterations(projectId)) {
-                                externalTasks.add(iteration);
+                try {
+                    switch (levelDDL) {
+                        case Constants.KEY_LEVEL_ITERATION:
+                            if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
+                                externalTasks.add(rallyClient.getIteration(projectId, iterationDDL));
+                            } else {
+                                for (Iteration iteration : rallyClient.getAllIterations(projectId)) {
+                                    externalTasks.add(iteration);
+                                }
                             }
-                        }
 
-                        break;
-                    case Constants.KEY_LEVEL_RELEASE:
-                        if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
-                            externalTasks.add(rallyClient.getRelease(projectId, iterationDDL));
-                        } else {
-                            for (Release release : rallyClient.getAllReleases(projectId)) {
-                                externalTasks.add(release);
+                            break;
+                        case Constants.KEY_LEVEL_RELEASE:
+                            if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
+                                externalTasks.add(rallyClient.getRelease(projectId, iterationDDL));
+                            } else {
+                                for (Release release : rallyClient.getAllReleases(projectId)) {
+                                    externalTasks.add(release);
+                                }
                             }
-                        }
 
-                        break;
-                    case Constants.KEY_LEVEL_THEME:
-                        if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
-                            externalTasks.add(rallyClient.getPortfolioTheme(iterationDDL));
-                        } else {
-                            for (PortfolioTheme theme : rallyClient.getAllPortfolioThemes(projectId)) {
-                                externalTasks.add(theme);
+                            break;
+                        case Constants.KEY_LEVEL_THEME:
+                            if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
+                                externalTasks.add(rallyClient.getPortfolioTheme(iterationDDL));
+                            } else {
+                                for (PortfolioTheme theme : rallyClient.getAllPortfolioThemes(projectId)) {
+                                    externalTasks.add(theme);
+                                }
                             }
-                        }
 
-                        break;
-                    case Constants.KEY_LEVEL_INITIATIVE:
-                        if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
-                            externalTasks.add(rallyClient.getPortfolioInitiative(iterationDDL));
-                        } else {
-                            for (PortfolioInitiative initiative : rallyClient.getAllPortfolioInitiatives(projectId)) {
-                                externalTasks.add(initiative);
+                            break;
+                        case Constants.KEY_LEVEL_INITIATIVE:
+                            if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
+                                externalTasks.add(rallyClient.getPortfolioInitiative(iterationDDL));
+                            } else {
+                                for (PortfolioInitiative initiative : rallyClient.getAllPortfolioInitiatives(projectId)) {
+                                    externalTasks.add(initiative);
+                                }
                             }
-                        }
 
-                        break;
-                    case Constants.KEY_LEVEL_FEATURE:
-                        if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
-                            externalTasks.add(rallyClient.getPortfolioFeature(iterationDDL));
-                        } else {
-                            for (PortfolioFeature feature : rallyClient.getAllPortfolioFeatures(projectId)) {
-                                externalTasks.add(feature);
+                            break;
+                        case Constants.KEY_LEVEL_FEATURE:
+                            if (!iterationDDL.equals(Constants.KEY_ALL_ITEMS)) {
+                                externalTasks.add(rallyClient.getPortfolioFeature(iterationDDL));
+                            } else {
+                                for (PortfolioFeature feature : rallyClient.getAllPortfolioFeatures(projectId)) {
+                                    externalTasks.add(feature);
+                                }
                             }
-                        }
 
-                        break;
+                            break;
+                    }
+                } catch (ClientRuntimeException e) {
+                    logger.error("", e);
+                    new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                } catch (ClientException e) {
+                    logger.error("", e);
+                    new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+                } catch (RuntimeException e) {
+                    logger.error("", e);
+                    new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
                 }
 
                 return externalTasks;
