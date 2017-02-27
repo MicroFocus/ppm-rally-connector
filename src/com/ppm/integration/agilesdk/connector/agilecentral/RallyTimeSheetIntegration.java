@@ -16,6 +16,7 @@ import java.util.List;
 import net.sf.json.JSONObject;
 
 import org.apache.log4j.Logger;
+import org.apache.wink.client.ClientRuntimeException;
 
 import com.hp.ppm.tm.model.TimeSheet;
 import com.ppm.integration.agilesdk.ValueSet;
@@ -53,6 +54,14 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
     }
 
+    public RallyClient getRallyClient(ValueSet values) {
+        Config config = new Config();
+        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
+        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME), values.get(Constants.KEY_PASSWORD));
+        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+        return rallyClient;
+    }
+
     @Override
     public List<Field> getMappingConfigurationFields(ValueSet paramValueSet) {
         return Arrays.asList(new Field[] {new PlainText(Constants.KEY_USERNAME, "USERNAME", "dan@acme.com", true),
@@ -66,11 +75,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         Subscription subscription = rallyClient.getSubscription();
                         return Arrays.asList(new Option[] {new Option(subscription.getId(), subscription.getName())});
@@ -85,11 +90,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         options.add(new Option(Constants.KEY_ALL_ITEMS, "All WorkSpaces"));
@@ -109,11 +110,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         options.add(new Option(Constants.KEY_ALL_ITEMS, "All Projects"));
@@ -139,11 +136,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
                     @Override
                     public List<Option> getDynamicalOptions(ValueSet values) {
-                        Config config = new Config();
-                        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-                        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME),
-                                values.get(Constants.KEY_PASSWORD));
-                        RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+                        RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
                         options.add(new Option(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY, "Work Item"));
@@ -179,157 +172,84 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
             final ValueSet values)
     {
         final List<ExternalWorkItem> items = Collections.synchronizedList(new LinkedList<ExternalWorkItem>());
+        try {
+            RallyClient rallyClient = getRallyClient(values);
 
-        Config config = new Config();
-        config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
-        config.setBasicAuthorization(values.get(Constants.KEY_USERNAME), values.get(Constants.KEY_PASSWORD));
-        final RallyClient rallyClient = new RallyClient(values.get(Constants.KEY_BASE_URL), config);
+            Subscription subscription = rallyClient.getSubscription();
+            List<Workspace> workspaces = rallyClient.getWorkspaces(subscription.getId());
 
-        Subscription subscription = rallyClient.getSubscription();
-        List<Workspace> workspaces = rallyClient.getWorkspaces(subscription.getId());
+            TimeSheet timeSheet = context.currentTimeSheet();
 
-        TimeSheet timeSheet = context.currentTimeSheet();
+            final Date startDate = timeSheet.getPeriodStartDate().toGregorianCalendar().getTime();
+            final Date endDate = timeSheet.getPeriodEndDate().toGregorianCalendar().getTime();
 
-        final Date startDate = timeSheet.getPeriodStartDate().toGregorianCalendar().getTime();
-        final Date endDate = timeSheet.getPeriodEndDate().toGregorianCalendar().getTime();
-
-        // Time Entry
-        HashMap<String, List<TimeEntryItem>> timeEntryItems = rallyClient.getTimeEntryItem();
-        HashMap<String, List<TimeEntryValue>> timeEntryValues = rallyClient.getTimeEntryValue();
-        HashMap<String, JSONObject> artifacts = new HashMap<>();
-        if (!values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
-            artifacts.putAll(rallyClient.getAllData());
-        }
-
-        for (final Workspace workspace : workspaces) {
-
-            if (values.get(Constants.KEY_WORKSPACE).equals(Constants.KEY_ALL_ITEMS)) {
-
-            } else if (!workspace.getId().equals(values.get(Constants.KEY_WORKSPACE))) {
-                continue;
+            // Time Entry
+            HashMap<String, List<TimeEntryItem>> timeEntryItems = rallyClient.getTimeEntryItem();
+            HashMap<String, List<TimeEntryValue>> timeEntryValues = rallyClient.getTimeEntryValue();
+            HashMap<String, JSONObject> artifacts = new HashMap<>();
+            if (!values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
+                artifacts.putAll(rallyClient.getAllData());
             }
 
-            List<Project> projects = rallyClient.getProjects(workspace.getId());
-            for (final Project project : projects) {
+            for (final Workspace workspace : workspaces) {
 
-                if (values.get(Constants.KEY_PROJECT).equals(Constants.KEY_ALL_ITEMS)) {
+                if (values.get(Constants.KEY_WORKSPACE).equals(Constants.KEY_ALL_ITEMS)) {
 
-                } else if (!project.getId().equals(values.get(Constants.KEY_PROJECT))) {
+                } else if (!workspace.getId().equals(values.get(Constants.KEY_WORKSPACE))) {
                     continue;
                 }
 
-                // To store Name_of_ITEM:TimeEntryValue
-                HashMap<String, List<TimeEntryValue>> hms = new HashMap<>();
+                List<Project> projects = rallyClient.getProjects(workspace.getId());
+                for (final Project project : projects) {
 
-                switch (values.get(Constants.KEY_DATA_DETAIL_LEVEL)) {
-                    case Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY:
+                    if (values.get(Constants.KEY_PROJECT).equals(Constants.KEY_ALL_ITEMS)) {
 
-                        for (String key : timeEntryItems.keySet()) {
+                    } else if (!project.getId().equals(values.get(Constants.KEY_PROJECT))) {
+                        continue;
+                    }
 
-                            for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
-                                // project
-                                if (!timeEntryItem.getProjectId().equals(project.getId())) {
+                    // To store Name_of_ITEM:TimeEntryValue
+                    HashMap<String, List<TimeEntryValue>> hms = new HashMap<>();
+
+                    switch (values.get(Constants.KEY_DATA_DETAIL_LEVEL)) {
+                        case Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY:
+
+                            for (String key : timeEntryItems.keySet()) {
+
+                                for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
+                                    // project
+                                    if (!timeEntryItem.getProjectId().equals(project.getId())) {
+                                        continue;
+                                    }
+                                    // get name of Work Item
+                                    String name = timeEntryItem.getWorkProductDisplayString();
+                                    if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
+                                        List<TimeEntryValue> timeEntryValue =
+                                                timeEntryValues.get(timeEntryItem.getUUID());
+                                        if (hms.containsKey(name)) {
+                                            List<TimeEntryValue> thisTimeEntryValue = hms.get(name);
+                                            thisTimeEntryValue.addAll(timeEntryValue);
+                                            hms.put(name, thisTimeEntryValue);
+                                        } else {
+                                            List<TimeEntryValue> thisTimeEntryValue = new ArrayList<>();
+                                            thisTimeEntryValue.addAll(timeEntryValue);
+                                            hms.put(name, thisTimeEntryValue);
+                                        }
+                                    }
+                                }
+                            }
+
+                            break;
+                        case Constants.KEY_DATA_DETAIL_LEVEL_ITERATION:
+
+                            for (String key : timeEntryItems.keySet()) {
+                                // get Task
+                                Task task = new Task(artifacts.get(key));
+                                if (!task.getProjectId().equals(project.getId())) {
                                     continue;
                                 }
-                                // get name of Work Item
-                                String name = timeEntryItem.getWorkProductDisplayString();
-                                if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
-                                    List<TimeEntryValue> timeEntryValue = timeEntryValues.get(timeEntryItem.getUUID());
-                                    if (hms.containsKey(name)) {
-                                        List<TimeEntryValue> thisTimeEntryValue = hms.get(name);
-                                        thisTimeEntryValue.addAll(timeEntryValue);
-                                        hms.put(name, thisTimeEntryValue);
-                                    } else {
-                                        List<TimeEntryValue> thisTimeEntryValue = new ArrayList<>();
-                                        thisTimeEntryValue.addAll(timeEntryValue);
-                                        hms.put(name, thisTimeEntryValue);
-                                    }
-                                }
-                            }
-                        }
-
-                        break;
-                    case Constants.KEY_DATA_DETAIL_LEVEL_ITERATION:
-
-                        for (String key : timeEntryItems.keySet()) {
-                            // get Task
-                            Task task = new Task(artifacts.get(key));
-                            if (!task.getProjectId().equals(project.getId())) {
-                                continue;
-                            }
-                            // get name of Iteration
-                            String name = task.getIterationName();
-
-                            for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
-                                if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
-                                    List<TimeEntryValue> timeEntryValue = timeEntryValues.get(timeEntryItem.getUUID());
-                                    if (hms.containsKey(name)) {
-                                        List<TimeEntryValue> thisTimeEntryValue = hms.get(name);
-                                        thisTimeEntryValue.addAll(timeEntryValue);
-                                        hms.put(name, thisTimeEntryValue);
-                                    } else {
-                                        List<TimeEntryValue> thisTimeEntryValue = new ArrayList<>();
-                                        thisTimeEntryValue.addAll(timeEntryValue);
-                                        hms.put(name, thisTimeEntryValue);
-                                    }
-                                }
-
-                            }
-                        }
-
-                        break;
-                    case Constants.KEY_DATA_DETAIL_LEVEL_RELEASE:
-
-                        for (String key : timeEntryItems.keySet()) {
-                            // get Task
-                            Task task = new Task(artifacts.get(key));
-                            if (!task.getProjectId().equals(project.getId())) {
-                                continue;
-                            }
-                            // get name of Release
-                            String name = task.getReleaseName();
-
-                            for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
-                                if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
-                                    List<TimeEntryValue> timeEntryValue = timeEntryValues.get(timeEntryItem.getUUID());
-                                    if (hms.containsKey(name)) {
-                                        List<TimeEntryValue> thisTimeEntryValue = hms.get(name);
-                                        thisTimeEntryValue.addAll(timeEntryValue);
-                                        hms.put(name, thisTimeEntryValue);
-                                    } else {
-                                        List<TimeEntryValue> thisTimeEntryValue = new ArrayList<>();
-                                        thisTimeEntryValue.addAll(timeEntryValue);
-                                        hms.put(name, thisTimeEntryValue);
-                                    }
-                                }
-
-                            }
-                        }
-
-                        break;
-                    case Constants.KEY_DATA_DETAIL_LEVEL_FEATURE:
-
-                        for (String key : timeEntryItems.keySet()) {
-                            // get Task
-                            Task task = new Task(artifacts.get(key));
-                            if (!task.getProjectId().equals(project.getId())) {
-                                continue;
-                            }
-                            String type = task.getWorkProductType();
-                            if (!type.equals("HierarchicalRequirement")) {
-                                continue;
-                            }
-
-                            // get name of Feature
-                            if (!artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature").isNullObject()) {
-                                String featureUUID =
-                                        artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature")
-                                                .getString("_refObjectUUID");
-                                PortfolioFeature feature = new PortfolioFeature(artifacts.get(featureUUID));
-                                if (!feature.getProjectID().equals(project.getId())) {
-                                    continue;
-                                }
-                                String name = feature.getName();
+                                // get name of Iteration
+                                String name = task.getIterationName();
 
                                 for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                     if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
@@ -349,34 +269,60 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                 }
                             }
 
-                        }
+                            break;
+                        case Constants.KEY_DATA_DETAIL_LEVEL_RELEASE:
 
-                        break;
-                    case Constants.KEY_DATA_DETAIL_LEVEL_INITIATIVE:
+                            for (String key : timeEntryItems.keySet()) {
+                                // get Task
+                                Task task = new Task(artifacts.get(key));
+                                if (!task.getProjectId().equals(project.getId())) {
+                                    continue;
+                                }
+                                // get name of Release
+                                String name = task.getReleaseName();
 
-                        for (String key : timeEntryItems.keySet()) {
-                            // get Task
-                            Task task = new Task(artifacts.get(key));
-                            if (!task.getProjectId().equals(project.getId())) {
-                                continue;
+                                for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
+                                    if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
+                                        List<TimeEntryValue> timeEntryValue =
+                                                timeEntryValues.get(timeEntryItem.getUUID());
+                                        if (hms.containsKey(name)) {
+                                            List<TimeEntryValue> thisTimeEntryValue = hms.get(name);
+                                            thisTimeEntryValue.addAll(timeEntryValue);
+                                            hms.put(name, thisTimeEntryValue);
+                                        } else {
+                                            List<TimeEntryValue> thisTimeEntryValue = new ArrayList<>();
+                                            thisTimeEntryValue.addAll(timeEntryValue);
+                                            hms.put(name, thisTimeEntryValue);
+                                        }
+                                    }
+
+                                }
                             }
-                            String type = task.getWorkProductType();
-                            if (!type.equals("HierarchicalRequirement")) {
-                                continue;
-                            }
-                            // get name of initiative
-                            if (!artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature").isNullObject()) {
-                                String featureUUID =
-                                        artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature")
-                                                .getString("_refObjectUUID");
-                                PortfolioFeature feature = new PortfolioFeature(artifacts.get(featureUUID));
-                                if (feature.getParentUUID() != null & feature.getProjectID().equals(project.getId())) {
-                                    PortfolioInitiative initiative =
-                                            new PortfolioInitiative(artifacts.get(feature.getParentUUID()));
-                                    if (!initiative.getProjectID().equals(project.getId())) {
+
+                            break;
+                        case Constants.KEY_DATA_DETAIL_LEVEL_FEATURE:
+
+                            for (String key : timeEntryItems.keySet()) {
+                                // get Task
+                                Task task = new Task(artifacts.get(key));
+                                if (!task.getProjectId().equals(project.getId()) & project.getChildrenCount() == 0) {
+                                    continue;
+                                }
+                                String type = task.getWorkProductType();
+                                if (!type.equals("HierarchicalRequirement")) {
+                                    continue;
+                                }
+
+                                // get name of Feature
+                                if (!artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature").isNullObject()) {
+                                    String featureUUID =
+                                            artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature")
+                                                    .getString("_refObjectUUID");
+                                    PortfolioFeature feature = new PortfolioFeature(artifacts.get(featureUUID));
+                                    if (!feature.getProjectID().equals(project.getId())) {
                                         continue;
                                     }
-                                    String name = initiative.getName();
+                                    String name = feature.getName();
 
                                     for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                         if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
@@ -398,38 +344,32 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
                             }
 
-                        }
+                            break;
+                        case Constants.KEY_DATA_DETAIL_LEVEL_INITIATIVE:
 
-                        break;
-                    case Constants.KEY_DATA_DETAIL_LEVEL_THEME:
-
-                        for (String key : timeEntryItems.keySet()) {
-                            // get Task
-                            Task task = new Task(artifacts.get(key));
-                            if (!task.getProjectId().equals(project.getId())) {
-                                continue;
-                            }
-                            String type = task.getWorkProductType();
-                            if (!type.equals("HierarchicalRequirement")) {
-                                continue;
-                            }
-                            // get name of theme
-                            if (!artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature").isNullObject()) {
-                                String featureUUID =
-                                        artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature")
-                                                .getString("_refObjectUUID");
-                                PortfolioFeature feature = new PortfolioFeature(artifacts.get(featureUUID));
-                                if (feature.getParentUUID() != null & feature.getProjectID().equals(project.getId())) {
-                                    PortfolioInitiative initiative =
-                                            new PortfolioInitiative(artifacts.get(feature.getParentUUID()));
-                                    if (initiative.getParentUUID() != null
-                                            & initiative.getProjectID().equals(project.getId())) {
-                                        PortfolioTheme theme =
-                                                new PortfolioTheme(artifacts.get(initiative.getParentUUID()));
-                                        if (!theme.getProjectID().equals(project.getId())) {
+                            for (String key : timeEntryItems.keySet()) {
+                                // get Task
+                                Task task = new Task(artifacts.get(key));
+                                if (!task.getProjectId().equals(project.getId()) & project.getChildrenCount() == 0) {
+                                    continue;
+                                }
+                                String type = task.getWorkProductType();
+                                if (!type.equals("HierarchicalRequirement")) {
+                                    continue;
+                                }
+                                // get name of initiative
+                                if (!artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature").isNullObject()) {
+                                    String featureUUID =
+                                            artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature")
+                                                    .getString("_refObjectUUID");
+                                    PortfolioFeature feature = new PortfolioFeature(artifacts.get(featureUUID));
+                                    if (feature.getParentUUID() != null) {
+                                        PortfolioInitiative initiative =
+                                                new PortfolioInitiative(artifacts.get(feature.getParentUUID()));
+                                        if (!initiative.getProjectID().equals(project.getId())) {
                                             continue;
                                         }
-                                        String name = theme.getName();
+                                        String name = initiative.getName();
 
                                         for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                             if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
@@ -453,18 +393,80 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
                             }
 
-                        }
+                            break;
+                        case Constants.KEY_DATA_DETAIL_LEVEL_THEME:
 
-                        break;
+                            for (String key : timeEntryItems.keySet()) {
+                                // get Task
+                                Task task = new Task(artifacts.get(key));
+                                if (!task.getProjectId().equals(project.getId()) & project.getChildrenCount() == 0) {
+                                    continue;
+                                }
+                                String type = task.getWorkProductType();
+                                if (!type.equals("HierarchicalRequirement")) {
+                                    continue;
+                                }
+                                // get name of theme
+                                if (!artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature").isNullObject()) {
+                                    String featureUUID =
+                                            artifacts.get(task.getWorkProductUUID()).getJSONObject("Feature")
+                                                    .getString("_refObjectUUID");
+                                    PortfolioFeature feature = new PortfolioFeature(artifacts.get(featureUUID));
+                                    if (feature.getParentUUID() != null) {
+                                        PortfolioInitiative initiative =
+                                                new PortfolioInitiative(artifacts.get(feature.getParentUUID()));
+                                        if (initiative.getParentUUID() != null) {
+                                            PortfolioTheme theme =
+                                                    new PortfolioTheme(artifacts.get(initiative.getParentUUID()));
+                                            if (!theme.getProjectID().equals(project.getId())) {
+                                                continue;
+                                            }
+                                            String name = theme.getName();
 
+                                            for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
+                                                if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
+                                                    List<TimeEntryValue> timeEntryValue =
+                                                            timeEntryValues.get(timeEntryItem.getUUID());
+                                                    if (hms.containsKey(name)) {
+                                                        List<TimeEntryValue> thisTimeEntryValue = hms.get(name);
+                                                        thisTimeEntryValue.addAll(timeEntryValue);
+                                                        hms.put(name, thisTimeEntryValue);
+                                                    } else {
+                                                        List<TimeEntryValue> thisTimeEntryValue = new ArrayList<>();
+                                                        thisTimeEntryValue.addAll(timeEntryValue);
+                                                        hms.put(name, thisTimeEntryValue);
+                                                    }
+                                                }
+
+                                            }
+                                        }
+
+                                    }
+
+                                }
+
+                            }
+
+                            break;
+
+                    }
+
+                    for (String key : hms.keySet()) {
+                        HashMap<String, Integer> thisHms = getTimeSheetData(startDate, endDate, hms.get(key));
+                        items.add(new RallyExternalWorkItem(project.getName(), key, thisHms, values, startDate, endDate));
+                    }
                 }
 
-                for (String key : hms.keySet()) {
-                    HashMap<String, Integer> thisHms = getTimeSheetData(startDate, endDate, hms.get(key));
-                    items.add(new RallyExternalWorkItem(project.getName(), key, thisHms, values, startDate, endDate));
-                }
             }
-
+        } catch (ClientRuntimeException e) {
+            logger.error("", e);
+            new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        } catch (ClientException e) {
+            logger.error("", e);
+            new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        } catch (RuntimeException e) {
+            logger.error("", e);
+            new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
         }
 
         return items;

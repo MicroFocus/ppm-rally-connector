@@ -1,7 +1,12 @@
+
 package com.ppm.integration.agilesdk.connector.agilecentral;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import org.apache.log4j.Logger;
+import org.apache.wink.client.ClientResponse;
+import org.apache.wink.client.ClientRuntimeException;
 import org.apache.wink.client.Resource;
 import org.apache.wink.client.RestClient;
 
@@ -11,12 +16,15 @@ public class RestHelper {
 
     private String endpoint;
 
+    private final Logger logger = Logger.getLogger(this.getClass());
+
     public RestHelper(String endpoint, Config config) {
         this.endpoint = endpoint;
         RestClient restClient =
                 config.getClientConfig() == null ? new RestClient() : new RestClient(config.getClientConfig());
-        this.resource = restClient.resource("").header("Proxy-Connection", "Keep-Alive")
-                .header("Authorization", config.getBasicAuthorization());
+        this.resource =
+                restClient.resource("").header("Proxy-Connection", "Keep-Alive")
+                        .header("Authorization", config.getBasicAuthorization());
     }
 
     public JSONObject get(String uri) {
@@ -59,6 +67,23 @@ public class RestHelper {
     }
 
     private JSONObject get() {
+
+        try {
+            ClientResponse resp = this.resource.get();
+            if (resp.getStatusCode() != 200) {
+                throw new ClientException("RALLY_API", "ERROR_AUTHENTICATION_FAILED");
+            }
+        } catch (ClientRuntimeException e) {
+            logger.error("", e);
+            new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        } catch (ClientException e) {
+            logger.error("", e);
+            new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        } catch (RuntimeException e) {
+            logger.error("", e);
+            new ConnectivityExceptionHandler().uncaughtException(Thread.currentThread(), e);
+        }
+
         String json = this.resource.get(String.class);
         return JSONObject.fromObject(json);
     }
