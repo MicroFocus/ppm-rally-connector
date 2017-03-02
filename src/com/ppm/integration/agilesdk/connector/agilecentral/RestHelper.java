@@ -37,7 +37,7 @@ public class RestHelper {
     }
 
     public JSONArray getAll(String uri, int pageSize) {
-        return query(uri, "", true, "", 1, pageSize);
+        return query(uri, "", true, "StartDate", 1, pageSize);
     }
 
     public JSONArray query(String uri, String query, boolean fetch, String order, int start, int pageSize) {

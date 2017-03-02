@@ -223,6 +223,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                     }
                                     // get name of Work Item
                                     String name = timeEntryItem.getWorkProductDisplayString();
+                                    if (name == null) {
+                                        name = "Unscheduled";
+                                    }
                                     if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
                                         List<TimeEntryValue> timeEntryValue =
                                                 timeEntryValues.get(timeEntryItem.getUUID());
@@ -250,6 +253,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                 }
                                 // get name of Iteration
                                 String name = task.getIterationName();
+                                if (name == null) {
+                                    name = "Unscheduled";
+                                }
 
                                 for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                     if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
@@ -280,7 +286,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                 }
                                 // get name of Release
                                 String name = task.getReleaseName();
-
+                                if (name == null) {
+                                    name = "Unscheduled";
+                                }
                                 for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                     if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
                                         List<TimeEntryValue> timeEntryValue =
@@ -323,7 +331,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                         continue;
                                     }
                                     String name = feature.getName();
-
+                                    if (name == null) {
+                                        name = "Unscheduled";
+                                    }
                                     for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                         if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
                                             List<TimeEntryValue> timeEntryValue =
@@ -370,7 +380,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                             continue;
                                         }
                                         String name = initiative.getName();
-
+                                        if (name == null) {
+                                            name = "Unscheduled";
+                                        }
                                         for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                             if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
                                                 List<TimeEntryValue> timeEntryValue =
@@ -422,7 +434,9 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                                                 continue;
                                             }
                                             String name = theme.getName();
-
+                                            if (name == null) {
+                                                name = "Unscheduled";
+                                            }
                                             for (TimeEntryItem timeEntryItem : timeEntryItems.get(key)) {
                                                 if (timeEntryValues.containsKey(timeEntryItem.getUUID())) {
                                                     List<TimeEntryValue> timeEntryValue =
