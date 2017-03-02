@@ -105,7 +105,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
                         return options;
                     }
 
-                }, new RallyEntityDropdown(Constants.KEY_LEVEL_DDL, "Level_to_Synchronous", true) {
+                }, new RallyEntityDropdown(Constants.KEY_LEVEL_DDL, "Level to Synchronous", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -126,7 +126,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
                         }
                         return options;
                     }
-                }, new RallyEntityDropdown(Constants.KEY_ITERATION_DDL, "Data_Detail", true) {
+                }, new RallyEntityDropdown(Constants.KEY_ITERATION_DDL, "Data Detail", true) {
 
                     @Override
                     public List<String> getDependencies() {
