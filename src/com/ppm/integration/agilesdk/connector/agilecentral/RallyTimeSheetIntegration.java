@@ -64,8 +64,8 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
     @Override
     public List<Field> getMappingConfigurationFields(ValueSet paramValueSet) {
-        return Arrays.asList(new Field[] {new PlainText(Constants.KEY_USERNAME, "USERNAME", "dan@acme.com", true),
-                new PasswordText(Constants.KEY_PASSWORD, "PASSWORD", "Release!", true),
+        return Arrays.asList(new Field[] {new PlainText(Constants.KEY_USERNAME, "USERNAME", "", true),
+                new PasswordText(Constants.KEY_PASSWORD, "PASSWORD", "", true),
                 new RallyEntityDropdown(Constants.KEY_SUBSCRIPTION, "SUBSCRIPTION", true) {
 
                     @Override
