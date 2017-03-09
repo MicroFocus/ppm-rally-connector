@@ -12,6 +12,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import net.sf.json.JSONObject;
 
@@ -127,7 +128,7 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
                         return options;
                     }
 
-                }, new RallyEntityDropdown(Constants.KEY_DATA_DETAIL_LEVEL, "Group By", true) {
+                }, new RallyEntityDropdown(Constants.KEY_DATA_DETAIL_LEVEL, "Group_By", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -164,12 +165,17 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
     @Override
     public List<ExternalWorkItem> getExternalWorkItems(TimeSheetIntegrationContext context, final ValueSet values) {
-        final List<ExternalWorkItem> items = getExternalWorkItemsByTasks(context, values);
+        List<ExternalWorkItem> items = new ArrayList<>();
+        try {
+            items = getExternalWorkItemsByTasks(context, values);
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
+        }
         return items;
     }
 
     private List<ExternalWorkItem> getExternalWorkItemsByTasks(TimeSheetIntegrationContext context,
-            final ValueSet values)
+            final ValueSet values) throws InterruptedException, ExecutionException
     {
         final List<ExternalWorkItem> items = Collections.synchronizedList(new LinkedList<ExternalWorkItem>());
         try {
@@ -185,9 +191,15 @@ public class RallyTimeSheetIntegration extends TimeSheetIntegration {
 
             // Time Entry
             HashMap<String, List<TimeEntryItem>> timeEntryItems = rallyClient.getTimeEntryItem();
-            HashMap<String, List<TimeEntryValue>> timeEntryValues = rallyClient.getTimeEntryValue();
+
+            HashMap<String, List<TimeEntryValue>> timeEntryValues = new HashMap<>();
+            if (timeEntryItems.size() != 0) {
+                timeEntryValues.putAll(rallyClient.getTimeEntryValue());
+            }
+
             HashMap<String, JSONObject> artifacts = new HashMap<>();
-            if (!values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
+            if (timeEntryItems.size() != 0
+                    & !values.get(Constants.KEY_DATA_DETAIL_LEVEL).equals(Constants.KEY_DATA_DETAIL_LEVEL_USERSTORY)) {
                 artifacts.putAll(rallyClient.getAllData());
             }
 

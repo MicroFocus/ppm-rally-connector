@@ -230,11 +230,25 @@ public class HierarchicalRequirement extends Entity {
             @Override
             public Date getActualFinish() {
                 if (hierarchicalRequirement != null) {
+                    if (hierarchicalRequirement.getScheduledFinish().getTime() > adjustFinishDateTime(new Date())
+                            .getTime()) {
+                        return adjustFinishDateTime(new Date());
+                    }
                     return hierarchicalRequirement.getScheduledFinish();
                 } else if (iteration != null) {
+                    if (iteration.getScheduledFinish().getTime() > adjustFinishDateTime(new Date()).getTime()) {
+                        return adjustFinishDateTime(new Date());
+                    }
                     return iteration.getScheduledFinish();
                 } else if (release != null) {
+                    if (release.getScheduledFinish().getTime() > adjustFinishDateTime(new Date()).getTime()) {
+                        return adjustFinishDateTime(new Date());
+                    }
                     return release.getScheduledFinish();
+                }
+
+                if (portfolioFeature.getScheduledFinish().getTime() > adjustFinishDateTime(new Date()).getTime()) {
+                    return adjustFinishDateTime(new Date());
                 }
                 return portfolioFeature.getScheduledFinish();
             }

@@ -17,6 +17,14 @@ public class TimeEntryItem extends Entity {
         return null;
     }
 
+    public String getUserUUID() {
+        JSONObject iteration = this.jsonObject.getJSONObject("User");
+        if (!iteration.isNullObject()) {
+            return iteration.getString("_refObjectUUID");
+        }
+        return null;
+    }
+
     public String getWorkProductUUID() {
         JSONObject iteration = this.jsonObject.getJSONObject("WorkProduct");
         if (!iteration.isNullObject()) {

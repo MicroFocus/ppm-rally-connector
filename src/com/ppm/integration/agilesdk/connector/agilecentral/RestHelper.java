@@ -71,7 +71,7 @@ public class RestHelper {
         try {
             ClientResponse resp = this.resource.get();
             if (resp.getStatusCode() != 200) {
-                throw new ClientException("RALLY_API", "ERROR_AUTHENTICATION_FAILED");
+                throw new ClientException(resp.getStatusCode() + "", resp.getMessage());
             }
         } catch (ClientRuntimeException e) {
             logger.error("", e);
