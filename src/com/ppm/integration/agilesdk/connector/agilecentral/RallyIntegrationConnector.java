@@ -28,8 +28,7 @@ public class RallyIntegrationConnector extends IntegrationConnector {
 
     @Override
     public List<Field> getDriverConfigurationFields() {
-        return Arrays.asList(new Field[] {
-new PlainText(Constants.KEY_BASE_URL, "BASE_URL", "", true),
+        return Arrays.asList(new Field[] {new PlainText(Constants.KEY_BASE_URL, "BASE_URL", "", true),
                 new PlainText(Constants.KEY_PROXY_HOST, "PROXY_HOST", "", false),
                 new PlainText(Constants.KEY_PROXY_PORT, "PROXY_PORT", "", false)});
     }

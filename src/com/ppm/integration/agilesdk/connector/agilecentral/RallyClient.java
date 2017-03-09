@@ -244,18 +244,24 @@ public class RallyClient {
         String timeEntryItemURI = "/slm/webservice/v2.0/timeentryitem";
         JSONArray jsonArray = helper.query(timeEntryItemURI, "", true, "", 1, 20);
 
+        String userURI = "/slm/webservice/v2.0/user";
+        User user = new User(helper.get(userURI).getJSONObject("User"));
+
         for (int i = 0; i < jsonArray.size(); i++) {
             TimeEntryItem item = new TimeEntryItem(jsonArray.getJSONObject(i));
-            String taskUUID = item.getTaskUUID();
-            if (hms.containsKey(taskUUID)) {
-                List<TimeEntryItem> items = hms.get(taskUUID);
-                items.add(item);
-                hms.put(taskUUID, items);
-            } else {
-                List<TimeEntryItem> items = new ArrayList<>();
-                items.add(item);
-                hms.put(taskUUID, items);
+            if (item.getUserUUID() != null & user.getUUID().equals(item.getUserUUID())) {
+                String taskUUID = item.getTaskUUID();
+                if (hms.containsKey(taskUUID)) {
+                    List<TimeEntryItem> items = hms.get(taskUUID);
+                    items.add(item);
+                    hms.put(taskUUID, items);
+                } else {
+                    List<TimeEntryItem> items = new ArrayList<>();
+                    items.add(item);
+                    hms.put(taskUUID, items);
+                }
             }
+
         }
         return hms;
     }

@@ -105,7 +105,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
                         return options;
                     }
 
-                }, new RallyEntityDropdown(Constants.KEY_LEVEL_DDL, "Level to Synchronous", true) {
+                }, new RallyEntityDropdown(Constants.KEY_LEVEL_DDL, "Level_to_Synchronous", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -117,16 +117,16 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
                         RallyClient rallyClient = getRallyClient(values);
 
                         List<Option> options = new LinkedList<Option>();
-                        options.add(new Option(Constants.KEY_LEVEL_ITERATION, "Iteration WorkItems"));
-                        options.add(new Option(Constants.KEY_LEVEL_RELEASE, "Release WorkItems"));
+                        options.add(new Option(Constants.KEY_LEVEL_ITERATION, "Iteration"));
+                        options.add(new Option(Constants.KEY_LEVEL_RELEASE, "Release"));
                         HashMap<String, List<PortfolioItem>> hms =
                                 rallyClient.getPortfolioItems(values.get(Constants.KEY_PROJECT));
                         for (String key : hms.keySet()) {
-                            options.add(new Option(key, key + " WorkItems"));
+                            options.add(new Option(key, key));
                         }
                         return options;
                     }
-                }, new RallyEntityDropdown(Constants.KEY_ITERATION_DDL, "Data Detail", true) {
+                }, new RallyEntityDropdown(Constants.KEY_ITERATION_DDL, "Data_Detail", true) {
 
                     @Override
                     public List<String> getDependencies() {
@@ -172,7 +172,7 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
                                 }
                                 break;
                             case Constants.KEY_LEVEL_FEATURE:
-                                options.add(new Option(Constants.KEY_ALL_ITEMS, "All features"));
+                                options.add(new Option(Constants.KEY_ALL_ITEMS, "All Features"));
                                 List<PortfolioFeature> portfolioFeatures =
                                         rallyClient.getPortfolioFeatures(values.get(Constants.KEY_PROJECT));
                                 for (PortfolioFeature portfolioFeature : portfolioFeatures) {
@@ -188,7 +188,6 @@ public class RallyWorkPlanIntegration extends WorkPlanIntegration {
 
     @Override
     public ExternalWorkPlan getExternalWorkPlan(WorkPlanIntegrationContext context, ValueSet values) {
-
         Config config = new Config();
         config.setProxy(values.get(Constants.KEY_PROXY_HOST), values.get(Constants.KEY_PROXY_PORT));
         config.setBasicAuthorization(values.get(Constants.KEY_USERNAME), values.get(Constants.KEY_PASSWORD));
