@@ -1,86 +1,67 @@
 package com.ppm.integration.agilesdk.connector.agilecentral.model;
 
+import com.ppm.integration.agilesdk.pm.ExternalTask;
+import com.ppm.integration.agilesdk.pm.ExternalTaskActuals;
+import net.sf.json.JSONObject;
+
+import javax.xml.bind.DatatypeConverter;
 import java.util.Date;
 import java.util.List;
 
-import javax.xml.bind.DatatypeConverter;
+public class Entity extends ExternalTask {
 
-import net.sf.json.JSONObject;
+    protected JSONObject jsonObject;
 
-import com.hp.ppm.integration.pm.IExternalTask;
-import com.hp.ppm.integration.pm.ITaskActual;
+    public Entity(JSONObject jsonObject) {
+        this.jsonObject = jsonObject;
+    }
 
-public class Entity implements IExternalTask{
+    protected boolean check(String key) {
+        return jsonObject != null && jsonObject.containsKey(key);
+    }
 
-	protected JSONObject jsonObject;
+    protected Date convertToDate(String date) {
+        return date != null && date != "null" ? DatatypeConverter.parseDateTime(date).getTime() : null;
+    }
 
-	public Entity(JSONObject jsonObject) {
-		this.jsonObject = jsonObject;
-	}
-	protected boolean check(String key) {
-		return jsonObject != null && jsonObject.containsKey(key);
-	}
+    public String getUUID() {
+        return check("_refObjectUUID") ? jsonObject.getString("_refObjectUUID") : null;
+    }
 
-	protected Date convertToDate(String date) {
-		return date != null && date != "null" ? DatatypeConverter.parseDateTime(date).getTime() : null;
-	}
+    public String getType() {
+        return check("_type") ? jsonObject.getString("_type") : null;
+    }
 
-	public String getUUID() {
-		return check("_refObjectUUID") ? jsonObject.getString("_refObjectUUID") : null;
-	}
+    @Override public String getId() {
+        return check("ObjectID") ? jsonObject.getString("ObjectID") : null;
+    }
 
-	public String getType(){
-		return check("_type") ? jsonObject.getString("_type") : null;
-	}
+    @Override public String getName() {
+        return check("Name") ? jsonObject.getString("Name") : null;
+    }
 
-	@Override
-	public String getId() {
-		return check("ObjectID") ? jsonObject.getString("ObjectID") : null;
-	}
+    @Override public long getOwnerId() {
+        return -1;
+    }
 
-	@Override
-	public String getName() {
-		return check("Name") ? jsonObject.getString("Name") : null;
-	}
+    @Override public String getOwnerRole() {
+        return null;
+    }
 
-	@Override
-	public Date getScheduleStart() {
-		return null;
-	}
+    @Override public List<ExternalTask> getChildren() {
+        return null;
+    }
 
-	@Override
-	public Date getScheduleFinish() {
-		return null;
-	}
+    @Override public TaskStatus getStatus() {
+        return null;
+    }
 
-	@Override
-	public long getOwnerId() {
-		return -1;
-	}
+    @Override public List<ExternalTaskActuals> getActuals() {
+        return null;
+    }
 
-	@Override
-	public String getOwnerRole() {
-		return null;
-	}
-
-	@Override
-	public List<IExternalTask> getChildren() {
-		return null;
-	}
-
-	@Override
-	public TaskStatus getStatus() {
-		return null;
-	}
-
-	@Override
-	public List<ITaskActual> getActuals() {
-		return null;
-	}
-
-	@Override
-	public boolean isMilestone() {
-		return false;
-	}
+    @Override public boolean isMilestone() {
+        return false;
+    }
 
 }

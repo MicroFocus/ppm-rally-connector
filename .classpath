@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="lib" path="bin/bundle/deploy/941/Connector-AGILECENTRAL/fs_war.jar"/>
-	<classpathentry kind="lib" path="bin/connector-agilecentral-impl.jar"/>
+	<classpathentry kind="lib" path="bin/bundle/deploy/941/Connector-RALLY/fs_war.jar"/>
+	<classpathentry kind="lib" path="bin/connector-rally-impl.jar"/>
 	<classpathentry kind="lib" path="bin/fs_war.jar"/>
-	<classpathentry kind="lib" path="bin/fs_war/WEB-INF/lib/connector-agilecentral-impl.jar"/>
-	<classpathentry kind="lib" path="bin/ppm-941-Connector-AGILECENTRAL.jar"/>
+	<classpathentry kind="lib" path="bin/fs_war/WEB-INF/lib/connector-rally-impl.jar"/>
+	<classpathentry kind="lib" path="bin/ppm-941-Connector-RALLY.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="C:/ppm/SourceCode/java/lib/runtime/acme.jar"/>
 	<classpathentry kind="lib" path="C:/ppm/SourceCode/java/lib/runtime/activation-1.1.jar"/>
